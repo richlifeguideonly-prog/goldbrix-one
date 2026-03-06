@@ -7,3 +7,4 @@ export * from "./swap-engine/state";
 export * from "./swap-engine/validate";
 
 export * from "./nostr/offers";
+export * from "./gbx-wallet";
