@@ -25,7 +25,12 @@ Notes
 
 
 Default GBX address format: bech32 bn1...
-Protocol fee: 10 bps (0.10%) burned to: CRsbbtdVnietKLiaaxxDmhJfYkjtuQrqXS
+Protocol fee: 10 bps (0.10%) burned to:
+CRsbbtdVnietKLiaaxxDmhJfYkjtuQrqXS
+
+
 Seeds:
+
 89.167.125.117:39444
+
 89.167.36.203:39444
