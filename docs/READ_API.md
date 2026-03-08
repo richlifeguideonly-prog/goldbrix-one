@@ -1,5 +1,6 @@
 # GOLDBRIX Read-Only API (MVP)
 
+
 Purpose: provide the mobile wallet with read-only blockchain data.
 
 ## Base URL
