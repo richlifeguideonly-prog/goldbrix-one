@@ -1,0 +1,9 @@
+{
+  "name": "goldbrix-read-api",
+  "version": "1.0.0",
+  "private": true,
+  "main": "read-api.js",
+  "scripts": {
+    "start": "node read-api.js"
+  }
+}
