@@ -60,7 +60,7 @@ export default function ExploreScreen() {
       setStatus(data);
       setDraftPayoutAddress(data.payout_address || '');
     } catch (err) {
-      console.error(err);
+      console.log('caught error');
       Alert.alert('API Error', 'Failed to fetch Goldbrix mining status');
     } finally {
       setLoading(false);
@@ -96,7 +96,7 @@ export default function ExploreScreen() {
       await fetchStatus();
       Alert.alert('Saved', 'Payout address saved successfully');
     } catch (err) {
-      console.error(err);
+      console.log('caught error');
       Alert.alert('API Error', 'Failed to save payout address');
     } finally {
       setActionLoading(false);
@@ -118,7 +118,7 @@ export default function ExploreScreen() {
       await fetchStatus();
       Alert.alert('Mining Started', 'Goldbrix mining started');
     } catch (err) {
-      console.error(err);
+      console.log('caught error');
       Alert.alert('API Error', 'Failed to start mining');
     } finally {
       setActionLoading(false);
@@ -140,7 +140,7 @@ export default function ExploreScreen() {
       await fetchStatus();
       Alert.alert('Mining Stopped', 'Goldbrix mining stopped');
     } catch (err) {
-      console.error(err);
+      console.log('caught error');
       Alert.alert('API Error', 'Failed to stop mining');
     } finally {
       setActionLoading(false);
@@ -204,13 +204,13 @@ export default function ExploreScreen() {
           <Text style={styles.value}>{status?.payout_address || 'No payout address set yet'}</Text>
 
           <Text style={[styles.label, styles.mt]}>Total Balance</Text>
-          <Text style={styles.value}>{status?.payout_total_gbx ?? '0.00000000'} GBX</Text>
+          <Text style={styles.value}>{status?.payout_total_gbx ?? '0.00000000'} GOLDBRIX</Text>
 
           <Text style={[styles.label, styles.mt]}>Spendable Balance</Text>
-          <Text style={styles.value}>{status?.payout_spendable_gbx ?? '0.00000000'} GBX</Text>
+          <Text style={styles.value}>{status?.payout_spendable_gbx ?? '0.00000000'} GOLDBRIX</Text>
 
           <Text style={[styles.label, styles.mt]}>Immature Balance</Text>
-          <Text style={styles.value}>{status?.payout_immature_gbx ?? '0.00000000'} GBX</Text>
+          <Text style={styles.value}>{status?.payout_immature_gbx ?? '0.00000000'} GOLDBRIX</Text>
 
           <Text style={[styles.label, styles.mt]}>Transactions</Text>
           <Text style={styles.value}>{status?.payout_tx_count ?? 0}</Text>

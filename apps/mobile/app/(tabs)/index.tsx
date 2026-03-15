@@ -118,13 +118,16 @@ export default function HomeScreen() {
     const loadWallet = async () => {
       try {
         const raw = await SecureStore.getItemAsync(STORE_KEY);
-        if (raw) {
-          const parsed: StoredWallet = JSON.parse(raw);
-          setAddress(parsed.address);
-          setMnemonic(parsed.mnemonic);
-        }
+ if (raw) {
+  const parsed: StoredWallet = JSON.parse(raw);
+  setAddress(parsed.address);
+  setMnemonic(parsed.mnemonic);
+  setTimeout(() => {
+    refreshAll();
+  }, 800);
+}
       } catch (err) {
-        console.error(err);
+        console.log('caught error');
         Alert.alert('Error', 'Failed to load saved wallet');
       } finally {
         setLoaded(true);
@@ -178,7 +181,10 @@ export default function HomeScreen() {
       }
 
       const data: AddressTxs = await res.json();
-      setTxs(Array.isArray(data.items) ? data.items : []);
+      const txList = Array.isArray(data) ? data : Array.isArray((data as any).items) ? (data as any).items : [];
+    console.log('TXS_FETCH_LEN', txList.length);
+    console.log('TXS_FETCH_FIRST', JSON.stringify(txList[0] || null));
+    setTxs(txList);
     } catch (err) {
       console.log('transaction history fetch failed');
     } finally {
@@ -214,7 +220,7 @@ export default function HomeScreen() {
 
       Alert.alert('Wallet Created', 'Goldbrix wallet saved on this device');
     } catch (err) {
-      console.error(err);
+      console.log('caught error');
       Alert.alert('Error', 'Failed to generate Goldbrix wallet');
     }
   };
@@ -244,7 +250,7 @@ export default function HomeScreen() {
 
       Alert.alert('Wallet Imported', 'Goldbrix wallet restored successfully');
     } catch (err) {
-      console.error(err);
+      console.log('caught error');
       Alert.alert('Error', 'Failed to import wallet');
     }
   };
@@ -311,7 +317,7 @@ export default function HomeScreen() {
     setSendAmount('');
   };
 
-  const submitRealSend = async () => {
+  const submitRealSend = async (confirmed = false) => {
     try {
       if (!mnemonic) {
         Alert.alert('Error', 'Missing wallet mnemonic');
@@ -341,19 +347,36 @@ export default function HomeScreen() {
       if (amountNum > available) {
         Alert.alert(
           'Insufficient spendable balance',
-          `Spendable: ${spendableBalance} GBX\nImmature: ${immatureBalance} GBX`
+          `Spendable: ${spendableBalance} GOLDBRIX\nImmature: ${immatureBalance} GOLDBRIX`
         );
         return;
       }
 
+    if (!confirmed) {
+      Alert.alert(
+        'Confirm Send',
+        `Destination: ${dest}
+Amount: ${amount} GOLDBRIX`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Sign & Broadcast', onPress: () => { void submitRealSend(true); } },
+        ]
+      );
+      return;
+    }
       setSending(true);
 
-      const signed = buildSignedRawTx({
+      console.log('SEND_TXS_LEN', txs.length);
+    console.log('SEND_SPENDABLE_LEN', txs.filter((u) => u?.spendable === true && Number(u?.amount_sats || 0) > 0).length);
+    console.log('SEND_FIRST_TX', JSON.stringify(txs[0] || null));
+    const signed = buildSignedRawTx({
         mnemonic,
         toAddress: dest,
         amountGbx: amount,
         utxos: txs,
       });
+
+    const feeGoldbrix = (Number(signed.feeSats) / 100000000).toFixed(8);
 
       const res = await fetch(`${API_BASE}/api/broadcast`, {
         method: 'POST',
@@ -371,17 +394,17 @@ export default function HomeScreen() {
 
       const data: BroadcastResponse = await res.json();
 
-      Alert.alert(
-        'Transaction Broadcasted',
-        `TXID:\n${data.txid}\n\nBroadcast successful. Balance and tx history update after confirmation.`
-      );
+    Alert.alert(
+      'Transaction Broadcasted',
+      `Destination: ${dest}\nAmount: ${amount} GOLDBRIX\nFee: ${feeGoldbrix} GOLDBRIX\nTXID: ${data.txid}\n\nBroadcast successful. Balance and tx history update after confirmation.`
+    );
 
-      setSendMode(false);
+    setSendMode(false);
       setSendAddress('');
       setSendAmount('');
       await refreshAll();
     } catch (err: any) {
-      console.error(err);
+      console.log('caught error');
       Alert.alert('Send Error', err?.message || 'Failed to sign and broadcast transaction');
     } finally {
       setSending(false);
@@ -437,7 +460,7 @@ export default function HomeScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.title}>Receive GBX</Text>
+        <Text style={styles.title}>Receive GOLDBRIX</Text>
         <Text style={styles.subtitle}>Share this address to receive Goldbrix</Text>
 
         <View style={styles.card}>
@@ -448,7 +471,7 @@ export default function HomeScreen() {
             <Text style={styles.buttonText}>Copy Address</Text>
           </TouchableOpacity>
 
-          <Text style={styles.tip}>Only send native Goldbrix (GBX) to this address</Text>
+          <Text style={styles.tip}>Only send native GOLDBRIX to this address</Text>
         </View>
 
         <TouchableOpacity style={styles.secondaryActionButton} onPress={closeReceive}>
@@ -466,18 +489,18 @@ export default function HomeScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.title}>Send GBX</Text>
+        <Text style={styles.title}>Send GOLDBRIX</Text>
         <Text style={styles.subtitle}>Local signing + real broadcast</Text>
 
         <View style={styles.card}>
           <Text style={styles.label}>Total Balance</Text>
-          <Text style={styles.value}>{totalBalance} GBX</Text>
+          <Text style={styles.value}>{totalBalance} GOLDBRIX</Text>
 
           <Text style={[styles.label, { marginTop: 18 }]}>Spendable Balance</Text>
-          <Text style={styles.value}>{spendableBalance} GBX</Text>
+          <Text style={styles.value}>{spendableBalance} GOLDBRIX</Text>
 
           <Text style={[styles.label, { marginTop: 18 }]}>Immature Balance</Text>
-          <Text style={styles.value}>{immatureBalance} GBX</Text>
+          <Text style={styles.value}>{immatureBalance} GOLDBRIX</Text>
 
           <Text style={[styles.label, { marginTop: 18 }]}>Destination Address</Text>
           <TextInput
@@ -489,7 +512,7 @@ export default function HomeScreen() {
             placeholderTextColor="#6B7280"
           />
 
-          <Text style={[styles.label, { marginTop: 18 }]}>Amount (GBX)</Text>
+          <Text style={[styles.label, { marginTop: 18 }]}>Amount (GOLDBRIX)</Text>
           <TextInput
             style={styles.inputSingle}
             value={sendAmount}
@@ -540,17 +563,17 @@ export default function HomeScreen() {
 
             <Text style={[styles.label, { marginTop: 18 }]}>Total Balance</Text>
             <Text style={styles.value}>
-              {balanceLoading ? 'Loading...' : `${totalBalance} GBX`}
+              {balanceLoading ? 'Loading...' : `${totalBalance} GOLDBRIX`}
             </Text>
 
             <Text style={[styles.label, { marginTop: 18 }]}>Spendable Balance</Text>
             <Text style={styles.value}>
-              {balanceLoading ? 'Loading...' : `${spendableBalance} GBX`}
+              {balanceLoading ? 'Loading...' : `${spendableBalance} GOLDBRIX`}
             </Text>
 
             <Text style={[styles.label, { marginTop: 18 }]}>Immature Balance</Text>
             <Text style={styles.value}>
-              {balanceLoading ? 'Loading...' : `${immatureBalance} GBX`}
+              {balanceLoading ? 'Loading...' : `${immatureBalance} GOLDBRIX`}
             </Text>
 
             <Text style={[styles.label, { marginTop: 18 }]}>Transactions</Text>
@@ -560,31 +583,33 @@ export default function HomeScreen() {
             <Text style={styles.value}>{network}</Text>
 
             {!seedVisible ? (
-              <TouchableOpacity style={styles.secondaryButton} onPress={revealSeedPhrase}>
-                <Text style={styles.secondaryButtonText}>Reveal Seed Phrase</Text>
-              </TouchableOpacity>
-            ) : (
-              <>
-                <Text style={[styles.label, { marginTop: 18 }]}>Seed Phrase</Text>
-                <TouchableOpacity onPress={() => copyText(mnemonic, 'Seed Phrase')}>
-                  <Text style={styles.value}>{mnemonic}</Text>
-                </TouchableOpacity>
-              </>
-            )}
+        <View style={styles.actionsGrid}>
+          <TouchableOpacity style={styles.actionButtonCompact} onPress={revealSeedPhrase}>
+            <Text style={styles.actionButtonCompactText}>Reveal Seed Phrase</Text>
+          </TouchableOpacity>
 
-            <TouchableOpacity style={styles.secondaryButton} onPress={openReceive}>
-              <Text style={styles.secondaryButtonText}>Receive GBX</Text>
-            </TouchableOpacity>
+          <TouchableOpacity style={styles.actionButtonCompact} onPress={openReceive}>
+            <Text style={styles.actionButtonCompactText}>Receive GOLDBRIX</Text>
+          </TouchableOpacity>
 
-            <TouchableOpacity style={styles.secondaryButton} onPress={openSend}>
-              <Text style={styles.secondaryButtonText}>Send GBX</Text>
-            </TouchableOpacity>
+          <TouchableOpacity style={styles.actionButtonCompact} onPress={openSend}>
+            <Text style={styles.actionButtonCompactText}>Send GOLDBRIX</Text>
+          </TouchableOpacity>
 
-            <TouchableOpacity style={styles.secondaryButton} onPress={refreshAll}>
-              <Text style={styles.secondaryButtonText}>Refresh Balance</Text>
-            </TouchableOpacity>
+          <TouchableOpacity style={styles.actionButtonCompact} onPress={refreshAll}>
+            <Text style={styles.actionButtonCompactText}>Refresh Balance</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <View style={styles.actionCardWide}>
+          <Text style={styles.actionCardWideLabel}>Seed Phrase</Text>
+          <TouchableOpacity onPress={() => copyText(mnemonic, 'Seed Phrase')}>
+            <Text style={styles.value}>{mnemonic}</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
-            <Text style={styles.tip}>Tap address to copy</Text>
+      <Text style={styles.tip}>Tap address to copy</Text>
           </View>
 
           <View style={styles.card}>
@@ -596,29 +621,28 @@ export default function HomeScreen() {
               <Text style={styles.value}>No transactions yet</Text>
             ) : (
               txs.map((tx, index) => (
-                <View key={`${tx.txid}-${tx.vout ?? index}`} style={styles.txItem}>
-                  <Text style={styles.txLabel}>TXID</Text>
-                  <Text style={styles.txValue}>{tx.txid}</Text>
+  <View key={`${tx.txid}-${tx.vout ?? index}`} style={styles.txItem}>
+  <Text style={styles.txLabel}>TXID</Text>
+  <Text style={styles.txValue}>{tx.txid}</Text>
 
-                  <Text style={[styles.txLabel, { marginTop: 10 }]}>Amount</Text>
-                  <Text style={styles.txValue}>{tx.amount_gbx ?? '0.00000000'} GBX</Text>
+  <Text style={[styles.txLabel, { marginTop: 10 }]}>Amount</Text>
+  <Text style={styles.txValue}>{tx.amount_gbx ?? '0.00000000'} GOLDBRIX</Text>
 
-                  <Text style={[styles.txLabel, { marginTop: 10 }]}>Vout</Text>
-                  <Text style={styles.txValue}>{tx.vout ?? '-'}</Text>
-                </View>
+  <Text style={[styles.txLabel, { marginTop: 10 }]}>Confirmations</Text>
+  <Text style={styles.txValue}>{tx.confirmations ?? 0}</Text>
+
+  <Text style={[styles.txLabel, { marginTop: 10 }]}>Height</Text>
+  <Text style={styles.txValue}>{tx.height ?? '-'}</Text>
+
+  <Text style={[styles.txLabel, { marginTop: 10 }]}>Spendable</Text>
+  <Text style={styles.txValue}>{tx.spendable ? 'YES' : 'NO'}</Text>
+</View>
+
               ))
             )}
           </View>
 
-          <View style={styles.actionsRow}>
-            <TouchableOpacity style={styles.secondaryActionButton} onPress={showImport}>
-              <Text style={styles.secondaryActionButtonText}>Import Existing Wallet</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.replaceButton} onPress={createNewWallet}>
-              <Text style={styles.replaceButtonText}>Create New Wallet</Text>
-            </TouchableOpacity>
-          </View>
+          
         </>
       )}
     </ScrollView>
@@ -728,6 +752,46 @@ const styles = StyleSheet.create({
     color: '#F5C542',
     fontSize: 14,
     fontWeight: '700',
+  },
+  actionsGrid: {
+    marginTop: 18,
+    width: '100%',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  actionButtonCompact: {
+    width: '48%',
+    backgroundColor: '#1F2937',
+    borderWidth: 1,
+    borderColor: '#F5C542',
+    borderRadius: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+    marginBottom: 12,
+    minHeight: 74,
+    justifyContent: 'center',
+  },
+  actionButtonCompactText: {
+    color: '#F5C542',
+    fontSize: 14,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  actionCardWide: {
+    marginTop: 18,
+    width: '100%',
+    backgroundColor: '#0F172A',
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#1F2937',
+  },
+  actionCardWideLabel: {
+    color: '#F5C542',
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 8,
   },
   actionsRow: {
     marginTop: 18,

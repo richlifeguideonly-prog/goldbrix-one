@@ -1,9 +1,18 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { LogBox } from 'react-native';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
+
+if (__DEV__) {
+  LogBox.ignoreLogs([
+    'Uncaught (in promise',
+    'Error: Unable',
+    'Unable to activate keep awake',
+  ]);
+}
 
 export const unstable_settings = {
   anchor: '(tabs)',
