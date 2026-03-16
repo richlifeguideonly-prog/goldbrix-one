@@ -87,9 +87,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'io.goldbrix.goldbrixone'
+    namespace 'com.goldbrix.goldbrixone'
     defaultConfig {
-        applicationId 'io.goldbrix.goldbrixone'
+        applicationId 'com.goldbrix.goldbrixone'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
