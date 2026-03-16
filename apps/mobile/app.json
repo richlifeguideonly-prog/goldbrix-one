@@ -20,7 +20,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "io.goldbrix.goldbrixone"
+
     },
     "web": {
       "output": "static",
