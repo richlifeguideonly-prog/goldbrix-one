@@ -1,0 +1,37 @@
+89-167-36-203.sslip.io {
+
+    handle_path /miner-api/* {
+        reverse_proxy 127.0.0.1:8090
+    }
+
+    handle /explorer-api/api/api/broadcast {
+        rewrite * /api/broadcast
+        reverse_proxy 127.0.0.1:8088
+    }
+
+    handle /explorer-api/api/status {
+        uri strip_prefix /explorer-api
+        reverse_proxy 127.0.0.1:8088
+    }
+
+    handle /explorer-api/api/address/* {
+        uri strip_prefix /explorer-api
+        reverse_proxy 127.0.0.1:8088
+    }
+
+    handle_path /explorer-api/* {
+        reverse_proxy 127.0.0.1:8089
+    }
+
+    handle_path /explorer/* {
+        root * /var/www/goldbrix-explorer
+        try_files {path} /index.html
+        file_server
+    }
+
+    handle {
+        root * /var/www/goldbrix
+        try_files {path} /index.html
+        file_server
+    }
+}
