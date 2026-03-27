@@ -1,16 +1,20 @@
 # GOLDBRIX ONE
 
-Mobile-first non-custodial wallet for GOLDBRIX on Android.
+Official non-custodial Android wallet for the GOLDBRIX network.
 
 GOLDBRIX ONE is designed to give users direct control over their wallet, seed phrase, and on-chain funds.
 
 ## Download APK
 
-[Download GOLDBRIX ONE APK (v1.0.0 Preview)](https://github.com/richlifeguideonly-prog/goldbrix-one/releases/download/v1.0.0-preview/goldbrix-one.apk)
+[Download GOLDBRIX ONE APK (v1.0.1 Preview Fixed)](https://github.com/richlifeguideonly-prog/goldbrix-one/releases/download/v1.0.1-preview/goldbrix-one-v1.0.1-preview-fixed.apk)
 
 ## Release Page
 
-[Open Release Notes](https://github.com/richlifeguideonly-prog/goldbrix-one/releases/tag/v1.0.0-preview)
+[Open Release Notes](https://github.com/richlifeguideonly-prog/goldbrix-one/releases/tag/v1.0.1-preview)
+
+## Explorer
+
+[Open Explorer](https://89-167-36-203.sslip.io/explorer/)
 
 ## APK SHA256
 
@@ -35,16 +39,10 @@ GOLDBRIX ONE currently focuses on the Android wallet experience, including walle
 
 ## MVP Modules
 
-- **Core (TypeScript):** fee logic, transaction flow, validations
-- **GBX wallet utilities:** bn1 bech32 address handling and wallet helpers
-- **Mobile app (Expo):** Android wallet interface and release build
-- **Nostr orderbook (MVP):** offer schema foundation for future expansion
-
-## Protocol Fee
-
-- Fee: **10 bps (0.10%)** in GBX
-- Burn address: `CRsbbtdVnietKLiaaxxDmhJfYkjtuQrqXS`
-- Enforcement rule: GBX lock transaction must include burn output (fee) and HTLC output (net)
+- Core (TypeScript): fee logic, transaction flow, validations
+- GBX wallet utilities: bech32 handling and wallet helpers
+- Mobile app (Expo): Android wallet interface and release build
+- Explorer integration: public chain visibility and transaction lookup
 
 ## Network Bootstrap
 
@@ -53,7 +51,7 @@ GOLDBRIX ONE currently focuses on the Android wallet experience, including walle
 
 ## Repository Structure
 
-- `packages/core/` — core business logic
-- `apps/mobile/` — Expo-based mobile wallet app
-
-
+- `apps/mobile` — Expo-based Android wallet app
+- `packages/core` — core wallet and transaction logic
+- `server` — backend and operational components
+- `docs` — project and release documentation
