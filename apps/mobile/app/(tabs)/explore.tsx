@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import * as SecureStore from 'expo-secure-store';
 import {
   Alert,
   SafeAreaView,
@@ -10,7 +11,40 @@ import {
   View,
 } from 'react-native';
 
-const API_BASE = 'https://89-167-36-203.sslip.io/miner-api';
+const API_BASE = 'https://89-167-36-203.sslip.io/pool-api';
+const MINER_API_BASE = 'https://89-167-36-203.sslip.io/miner-api';
+const WALLET_STORE_KEY = 'goldbrix_wallet_v1';
+const POOL_CLIENT_KEY = 'goldbrix_pool_client_id_v1';
+
+type StoredWallet = {
+  address?: string;
+  mnemonic?: string;
+};
+
+type PoolWorker = {
+  worker_name: string;
+  status: string;
+  last_share_at: string | null;
+  hashrate_1m: number;
+  hashrate_15m: number;
+  hashrate_24h: number;
+};
+
+type PoolMe = {
+  ok: boolean;
+  account_uuid?: string;
+  client_id?: string;
+  payout_address?: string;
+  min_payout_gbx?: string;
+  pending_gbx?: string;
+  confirmed_gbx?: string;
+  paid_gbx?: string;
+  total_paid_gbx?: string;
+  workers?: PoolWorker[];
+  updated_at?: number;
+  error?: string;
+  message?: string;
+};
 
 type MiningStatus = {
   ok: boolean;
@@ -41,65 +75,99 @@ type MiningStatus = {
   updated_at: number;
 };
 
+function makeClientId() {
+  return `gbx-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+const hasPoolAccount = (status: any) =>
+  Boolean(status?.account_uuid && String(status.account_uuid).trim());
+
+const formatUpdatedAt = (value: any) => {
+  if (value === null || value === undefined || value === '') return '-';
+  const n = Number(value);
+  let d: Date;
+
+  if (Number.isFinite(n)) {
+    d = new Date(n > 1e12 ? n : n * 1000);
+  } else {
+    d = new Date(String(value));
+  }
+
+  if (Number.isNaN(d.getTime())) return String(value);
+
+  return d.toLocaleString('en-GB', {
+    year: 'numeric',
+    month: 'short',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
+const formatHashrate = (value: any) => {
+  const n = Number(value ?? 0);
+  if (!Number.isFinite(n) || n <= 0) return '0 H/s';
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(2)} MH/s`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(2)} KH/s`;
+  return `${n.toFixed(2)} H/s`;
+};
+
 export default function ExploreScreen() {
-  const [status, setStatus] = useState<MiningStatus | null>(null);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [clientId, setClientId] = useState('');
   const [draftPayoutAddress, setDraftPayoutAddress] = useState('');
+  const [status, setStatus] = useState<PoolMe | null>(null);
+  const [minerStatus, setMinerStatus] = useState<MiningStatus | null>(null);
 
-  const fetchStatus = async () => {
+  const fetchMe = async (cid?: string) => {
     try {
+      const useClientId = String(cid || clientId).trim();
+      if (!useClientId) return;
+
       setLoading(true);
 
-      const res = await fetch(`${API_BASE}/api/status`);
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
+      const res = await fetch(
+        `${API_BASE}/api/pool/stats/me?client_id=${encodeURIComponent(useClientId)}`
+      );
+      const data: PoolMe = await res.json();
+
+      if (!res.ok || data.ok === false) {
+        throw new Error(data?.message || data?.error || `HTTP ${res.status}`);
       }
 
-      const data: MiningStatus = await res.json();
       setStatus(data);
-      setDraftPayoutAddress(data.payout_address || '');
-    } catch (err) {
-      console.log('caught error');
-      Alert.alert('API Error', 'Failed to fetch Goldbrix mining status');
+
+      if (data.payout_address) {
+        setDraftPayoutAddress(data.payout_address);
+      }
+    } catch (err: any) {
+      console.log('pool me failed', err);
+      Alert.alert('Pool API Error', err?.message || 'Failed to load pool account');
     } finally {
       setLoading(false);
     }
   };
 
-  const savePayoutAddress = async () => {
+  const fetchMinerStatus = async () => {
     try {
-      const clean = draftPayoutAddress.trim();
+      setLoading(true);
 
-      if (!clean) {
-        Alert.alert('Invalid address', 'Please enter a payout address.');
-        return;
-      }
-
-      if (!/^(bn1|C|S)/.test(clean)) {
-        Alert.alert('Invalid address', 'Address must start with bn1, C, or S.');
-        return;
-      }
-
-      setActionLoading(true);
-
-      const res = await fetch(`${API_BASE}/api/payout`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ address: clean }),
-      });
-
+      const res = await fetch(`${MINER_API_BASE}/api/status`);
       if (!res.ok) {
         throw new Error(`HTTP ${res.status}`);
       }
 
-      await fetchStatus();
-      Alert.alert('Saved', 'Payout address saved successfully');
+      const data: MiningStatus = await res.json();
+      setMinerStatus(data);
+
+      if (data.payout_address && !draftPayoutAddress.trim()) {
+        setDraftPayoutAddress(data.payout_address);
+      }
     } catch (err) {
-      console.log('caught error');
-      Alert.alert('API Error', 'Failed to save payout address');
+      console.log('miner status failed', err);
     } finally {
-      setActionLoading(false);
+      setLoading(false);
     }
   };
 
@@ -107,7 +175,7 @@ export default function ExploreScreen() {
     try {
       setActionLoading(true);
 
-      const res = await fetch(`${API_BASE}/api/miner/start`, {
+      const res = await fetch(`${MINER_API_BASE}/api/miner/start`, {
         method: 'POST',
       });
 
@@ -115,11 +183,11 @@ export default function ExploreScreen() {
         throw new Error(`HTTP ${res.status}`);
       }
 
-      await fetchStatus();
+      await fetchMinerStatus();
       Alert.alert('Mining Started', 'Goldbrix mining started');
-    } catch (err) {
-      console.log('caught error');
-      Alert.alert('API Error', 'Failed to start mining');
+    } catch (err: any) {
+      console.log('start mining failed', err);
+      Alert.alert('Miner API Error', err?.message || 'Failed to start mining');
     } finally {
       setActionLoading(false);
     }
@@ -129,7 +197,7 @@ export default function ExploreScreen() {
     try {
       setActionLoading(true);
 
-      const res = await fetch(`${API_BASE}/api/miner/stop`, {
+      const res = await fetch(`${MINER_API_BASE}/api/miner/stop`, {
         method: 'POST',
       });
 
@@ -137,18 +205,148 @@ export default function ExploreScreen() {
         throw new Error(`HTTP ${res.status}`);
       }
 
-      await fetchStatus();
+      await fetchMinerStatus();
       Alert.alert('Mining Stopped', 'Goldbrix mining stopped');
-    } catch (err) {
-      console.log('caught error');
-      Alert.alert('API Error', 'Failed to stop mining');
+    } catch (err: any) {
+      console.log('stop mining failed', err);
+      Alert.alert('Miner API Error', err?.message || 'Failed to stop mining');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+
+  const registerPoolAccount = async (cid: string, payoutAddress: string, showAlert = false) => {
+    const cleanClientId = String(cid || '').trim();
+    const cleanAddress = String(payoutAddress || '').trim();
+
+    if (!cleanClientId) throw new Error('Missing pool client ID');
+    if (!cleanAddress) throw new Error('Missing payout address');
+
+    const res = await fetch(`${API_BASE}/api/pool/account/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ client_id: cleanClientId, payout_address: cleanAddress }),
+    });
+
+    const data: PoolMe = await res.json();
+
+    if (!res.ok || data.ok === false) {
+      throw new Error(data?.message || data?.error || `HTTP ${res.status}`);
+    }
+
+    setStatus(data);
+    setDraftPayoutAddress(data.payout_address || cleanAddress);
+
+    if (showAlert) {
+      Alert.alert('Pool Ready', 'Pool account registered successfully');
+    }
+  };
+
+  const savePayoutAddress = async () => {
+    try {
+      const cleanClientId = clientId.trim();
+      const cleanAddress = draftPayoutAddress.trim();
+
+      if (!cleanClientId) {
+        Alert.alert('Pool API Error', 'Missing pool client ID');
+        return;
+      }
+
+      if (!cleanAddress) {
+        Alert.alert('Invalid address', 'Please enter a payout address.');
+        return;
+      }
+
+      setActionLoading(true);
+
+      const res = await fetch(`${API_BASE}/api/pool/payout-address`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ client_id: cleanClientId, payout_address: cleanAddress }),
+      });
+
+      const data: PoolMe = await res.json();
+
+      if (!res.ok || data.ok === false) {
+        throw new Error(data?.message || data?.error || `HTTP ${res.status}`);
+      }
+
+      await fetchMe(cleanClientId);
+      Alert.alert('Saved', 'Payout address updated');
+    } catch (err: any) {
+      console.log('update payout failed', err);
+      Alert.alert('Pool API Error', err?.message || 'Failed to update payout address');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const joinPool = async () => {
+    try {
+      const cleanClientId = clientId.trim();
+      const cleanAddress = draftPayoutAddress.trim();
+
+      if (!cleanClientId) {
+        Alert.alert('Pool API Error', 'Missing pool client ID');
+        return;
+      }
+
+      if (!cleanAddress) {
+        Alert.alert('Invalid address', 'Please enter a payout address.');
+        return;
+      }
+
+      setActionLoading(true);
+      await registerPoolAccount(cleanClientId, cleanAddress, true);
+      await fetchMe(cleanClientId);
+    } catch (err: any) {
+      console.log('join pool failed', err);
+      Alert.alert('Pool API Error', err?.message || 'Failed to join pool');
     } finally {
       setActionLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchStatus();
+    const init = async () => {
+      try {
+        let cid = (await SecureStore.getItemAsync(POOL_CLIENT_KEY)) || '';
+        if (!cid) {
+          cid = makeClientId();
+          await SecureStore.setItemAsync(POOL_CLIENT_KEY, cid);
+        }
+        setClientId(cid);
+
+        const raw = await SecureStore.getItemAsync(WALLET_STORE_KEY);
+        let walletAddress = '';
+
+        if (raw) {
+          try {
+            const parsed: StoredWallet = JSON.parse(raw);
+            walletAddress = String(parsed.address || '').trim();
+          } catch {}
+        }
+
+        if (walletAddress) {
+          setDraftPayoutAddress(walletAddress);
+
+          try {
+            await registerPoolAccount(cid, walletAddress, false);
+          } catch (err) {
+            console.log('initial pool register skipped', err);
+          }
+        }
+
+        await fetchMe(cid);
+        await fetchMinerStatus();
+      } catch (err: any) {
+        console.log('pool init failed', err);
+        Alert.alert('Pool API Error', err?.message || 'Failed to initialize pool screen');
+      }
+    };
+
+    init();
   }, []);
 
   return (
@@ -159,78 +357,67 @@ export default function ExploreScreen() {
         showsVerticalScrollIndicator={false}
       >
         <Text style={styles.title}>Mining</Text>
-        <Text style={styles.subtitle}>Goldbrix Wallet + Miner</Text>
+        <Text style={styles.subtitle}>Goldbrix Wallet + Pool</Text>
 
         <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Node Status</Text>
+          <Text style={styles.sectionTitle}>Miner Control</Text>
 
-          <Text style={styles.label}>Network</Text>
-          <Text style={styles.value}>{status?.network ?? '-'}</Text>
-
-          <Text style={[styles.label, styles.mt]}>Mining Active</Text>
+          <Text style={styles.label}>Mining Active</Text>
           <Text style={styles.value}>
-            {loading ? 'Loading...' : status ? (status.mining_active ? 'Yes' : 'No') : '-'}
+            {loading ? 'Loading...' : minerStatus ? (minerStatus.mining_active ? 'Yes' : 'No') : '-'}
           </Text>
 
-          <Text style={[styles.label, styles.mt]}>Miner Service</Text>
-          <Text style={styles.value}>{status?.miner_service ?? '-'}</Text>
-
-          <Text style={[styles.label, styles.mt]}>Synced</Text>
-          <Text style={styles.value}>
-            {loading ? 'Loading...' : status ? (status.synced ? 'Yes' : 'No') : '-'}
-          </Text>
+          <Text style={[styles.label, styles.mt]}>Network</Text>
+          <Text style={styles.value}>{minerStatus?.network ?? '-'}</Text>
 
           <Text style={[styles.label, styles.mt]}>Best Block Height</Text>
-          <Text style={styles.value}>{status?.best_block_height ?? '-'}</Text>
-
-          <Text style={[styles.label, styles.mt]}>Peer Count</Text>
-          <Text style={styles.value}>{status?.peer_count ?? '-'}</Text>
-
-          <Text style={[styles.label, styles.mt]}>Best Block Hash</Text>
-          <Text style={styles.value}>{status?.best_block_hash ?? '-'}</Text>
+          <Text style={styles.value}>{minerStatus?.best_block_height ?? '-'}</Text>
 
           <Text style={[styles.label, styles.mt]}>Updated At</Text>
-          <Text style={styles.value}>{status?.updated_at ?? '-'}</Text>
+          <Text style={styles.value}>{formatUpdatedAt(minerStatus?.updated_at)}</Text>
 
-          <TouchableOpacity style={styles.button} onPress={fetchStatus}>
-            <Text style={styles.buttonText}>Refresh Mining Status</Text>
+          <TouchableOpacity style={styles.button} onPress={startMining} disabled={actionLoading}>
+            <Text style={styles.buttonText}>
+              {actionLoading ? 'Please wait...' : 'Start Mining'}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.button} onPress={stopMining} disabled={actionLoading}>
+            <Text style={styles.buttonText}>
+              {actionLoading ? 'Please wait...' : 'Stop Mining'}
+            </Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Payout Balance</Text>
+          <Text style={styles.sectionTitle}>Pool Account</Text>
 
-          <Text style={styles.label}>Payout Address</Text>
-          <Text style={styles.value}>{status?.payout_address || 'No payout address set yet'}</Text>
+          <Text style={styles.label}>Client ID</Text>
+          <Text style={styles.value}>{clientId || '-'}</Text>
 
-          <Text style={[styles.label, styles.mt]}>Total Balance</Text>
-          <Text style={styles.value}>{status?.payout_total_gbx ?? '0.00000000'} GOLDBRIX</Text>
+          <Text style={[styles.label, styles.mt]}>Account UUID</Text>
+          <Text style={styles.value}>{status?.account_uuid || '-'}</Text>
 
-          <Text style={[styles.label, styles.mt]}>Spendable Balance</Text>
-          <Text style={styles.value}>{status?.payout_spendable_gbx ?? '0.00000000'} GOLDBRIX</Text>
+          <Text style={[styles.label, styles.mt]}>Updated At</Text>
+          <Text style={styles.value}>{formatUpdatedAt(status?.updated_at)}</Text>
 
-          <Text style={[styles.label, styles.mt]}>Immature Balance</Text>
-          <Text style={styles.value}>{status?.payout_immature_gbx ?? '0.00000000'} GOLDBRIX</Text>
+          {hasPoolAccount(status) ? (
+      <TouchableOpacity style={styles.button} disabled>
+        <Text style={styles.buttonText}>Pool Joined</Text>
+      </TouchableOpacity>
+    ) : (
+      <TouchableOpacity style={styles.button} onPress={joinPool} disabled={actionLoading}>
+        <Text style={styles.buttonText}>
+          {actionLoading ? 'Please wait...' : 'Join Pool'}
+        </Text>
+      </TouchableOpacity>
+    )}
 
-          <Text style={[styles.label, styles.mt]}>Transactions</Text>
-          <Text style={styles.value}>{status?.payout_tx_count ?? 0}</Text>
-
-          <Text style={[styles.label, styles.mt]}>UTXO Count</Text>
-          <Text style={styles.value}>{status?.payout_utxo_count ?? 0}</Text>
-
-          {status?.payout_last_txid ? (
-            <>
-              <Text style={[styles.label, styles.mt]}>Last TXID</Text>
-              <Text style={styles.value}>{status.payout_last_txid}</Text>
-            </>
-          ) : null}
-
-          {status?.payout_error ? (
-            <>
-              <Text style={[styles.label, styles.mt]}>Payout Error</Text>
-              <Text style={styles.value}>{status.payout_error}</Text>
-            </>
-          ) : null}
+          <TouchableOpacity style={styles.button} onPress={async () => { await fetchMe(); await fetchMinerStatus(); }} disabled={loading}>
+            <Text style={styles.buttonText}>
+              {loading ? 'Loading...' : 'Refresh Pool Status'}
+            </Text>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.card}>
@@ -253,44 +440,55 @@ export default function ExploreScreen() {
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Mining Control</Text>
+          <Text style={styles.sectionTitle}>Pool Balances</Text>
 
-          <TouchableOpacity style={styles.button} onPress={startMining} disabled={actionLoading}>
-            <Text style={styles.buttonText}>
-              {actionLoading ? 'Please wait...' : 'Start Mining'}
-            </Text>
-          </TouchableOpacity>
+          <Text style={styles.label}>Current Payout Address</Text>
+          <Text style={styles.value}>{status?.payout_address || draftPayoutAddress || '-'}</Text>
 
-          <TouchableOpacity style={styles.secondaryButton} onPress={stopMining} disabled={actionLoading}>
-            <Text style={styles.secondaryButtonText}>
-              {actionLoading ? 'Please wait...' : 'Stop Mining'}
-            </Text>
-          </TouchableOpacity>
+          <Text style={[styles.label, styles.mt]}>Min Payout</Text>
+          <Text style={styles.value}>{status?.min_payout_gbx ?? '0.00000000'} GOLDBRIX</Text>
+
+          <Text style={[styles.label, styles.mt]}>Pending</Text>
+          <Text style={styles.value}>{status?.pending_gbx ?? '0.00000000'} GOLDBRIX</Text>
+
+          <Text style={[styles.label, styles.mt]}>Confirmed</Text>
+          <Text style={styles.value}>{status?.confirmed_gbx ?? '0.00000000'} GOLDBRIX</Text>
+
+          <Text style={[styles.label, styles.mt]}>Paid</Text>
+          <Text style={styles.value}>{status?.paid_gbx ?? '0.00000000'} GOLDBRIX</Text>
+
+          <Text style={[styles.label, styles.mt]}>Total Paid</Text>
+          <Text style={styles.value}>{status?.total_paid_gbx ?? '0.00000000'} GOLDBRIX</Text>
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Mining Stats</Text>
+          <Text style={styles.sectionTitle}>Workers</Text>
 
-          <Text style={styles.label}>Difficulty</Text>
-          <Text style={styles.value}>{status?.difficulty ?? '-'}</Text>
+          {!status?.workers || status.workers.length === 0 ? (
+            <Text style={styles.value}>No workers yet</Text>
+          ) : (
+            status.workers.map((worker, index) => (
+              <View key={`${worker.worker_name}-${index}`} style={styles.workerBox}>
+                <Text style={styles.label}>Worker</Text>
+                <Text style={styles.value}>{worker.worker_name}</Text>
 
-          <Text style={[styles.label, styles.mt]}>Network Hashrate</Text>
-          <Text style={styles.value}>{status?.networkhashps ?? '-'}</Text>
+                <Text style={[styles.label, styles.mt]}>Status</Text>
+                <Text style={styles.value}>{worker.status}</Text>
 
-          <Text style={[styles.label, styles.mt]}>Pooled TX</Text>
-          <Text style={styles.value}>{status?.pooledtx ?? '-'}</Text>
+                <Text style={[styles.label, styles.mt]}>Last Share</Text>
+                <Text style={styles.value}>{worker.last_share_at || '-'}</Text>
 
-          <Text style={[styles.label, styles.mt]}>Current Block TX</Text>
-          <Text style={styles.value}>{status?.currentblocktx ?? '-'}</Text>
+                <Text style={[styles.label, styles.mt]}>Hashrate 1m</Text>
+                <Text style={styles.value}>{formatHashrate(worker.hashrate_1m)}</Text>
 
-          <Text style={[styles.label, styles.mt]}>Current Block Weight</Text>
-          <Text style={styles.value}>{status?.currentblockweight ?? '-'}</Text>
+                <Text style={[styles.label, styles.mt]}>Hashrate 15m</Text>
+                <Text style={styles.value}>{formatHashrate(worker.hashrate_15m)}</Text>
 
-          <Text style={[styles.label, styles.mt]}>Mempool Size</Text>
-          <Text style={styles.value}>{status?.mempool_size ?? '-'}</Text>
-
-          <Text style={[styles.label, styles.mt]}>Mempool Bytes</Text>
-          <Text style={styles.value}>{status?.mempool_bytes ?? '-'}</Text>
+                <Text style={[styles.label, styles.mt]}>Hashrate 24h</Text>
+                <Text style={styles.value}>{formatHashrate(worker.hashrate_24h)}</Text>
+              </View>
+            ))
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -300,93 +498,82 @@ export default function ExploreScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#0B1220',
+    backgroundColor: '#020B22',
   },
   scrollContent: {
-    paddingHorizontal: 24,
-    paddingTop: 48,
-    paddingBottom: 120,
-    alignItems: 'center',
+    padding: 20,
+    paddingBottom: 40,
   },
   title: {
-    color: '#F5C542',
-    fontSize: 32,
+    fontSize: 34,
     fontWeight: '800',
+    color: '#F4C542',
     textAlign: 'center',
+    marginTop: 12,
   },
   subtitle: {
-    color: '#E5E7EB',
-    marginTop: 12,
     fontSize: 16,
+    color: '#D1D5DB',
     textAlign: 'center',
-    opacity: 0.9,
+    marginTop: 8,
     marginBottom: 24,
   },
   card: {
-    width: '100%',
-    backgroundColor: '#111827',
-    borderRadius: 14,
-    padding: 16,
-    marginTop: 18,
+    backgroundColor: '#08152F',
+    borderRadius: 22,
+    padding: 20,
+    marginBottom: 18,
   },
   sectionTitle: {
-    color: '#F5C542',
-    fontSize: 18,
+    color: '#F4C542',
+    fontSize: 16,
     fontWeight: '700',
-    marginBottom: 12,
+    marginBottom: 14,
   },
   label: {
-    color: '#F5C542',
+    color: '#F4C542',
     fontSize: 14,
     fontWeight: '700',
-    marginBottom: 8,
   },
   value: {
     color: '#FFFFFF',
-    fontSize: 14,
-    lineHeight: 22,
+    fontSize: 15,
+    marginTop: 6,
   },
   mt: {
-    marginTop: 18,
-  },
-  button: {
-    marginTop: 22,
-    backgroundColor: '#1F2937',
-    borderColor: '#F5C542',
-    borderWidth: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 18,
-    borderRadius: 10,
-  },
-  buttonText: {
-    color: '#F5C542',
-    fontSize: 14,
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-  secondaryButton: {
     marginTop: 16,
-    backgroundColor: '#0F172A',
-    borderColor: '#F5C542',
-    borderWidth: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 18,
-    borderRadius: 10,
-  },
-  secondaryButtonText: {
-    color: '#F5C542',
-    fontSize: 14,
-    fontWeight: '700',
-    textAlign: 'center',
   },
   input: {
-    minHeight: 110,
-    backgroundColor: '#0F172A',
+    minHeight: 84,
+    borderRadius: 18,
+    backgroundColor: '#0B1736',
     color: '#FFFFFF',
-    borderRadius: 10,
     padding: 14,
+    borderWidth: 1,
+    borderColor: '#1F2A44',
     textAlignVertical: 'top',
-    fontSize: 14,
-    lineHeight: 22,
+  },
+  button: {
+    marginTop: 14,
+    borderRadius: 18,
+    borderWidth: 1.5,
+    borderColor: '#F4C542',
+    paddingVertical: 18,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#1A2742',
+  },
+  buttonText: {
+    color: '#F4C542',
+    fontSize: 15,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  workerBox: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#1F2A44',
   },
 });

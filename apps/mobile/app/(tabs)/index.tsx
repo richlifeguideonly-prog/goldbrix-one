@@ -18,7 +18,7 @@ import type { ApiUtxo } from '../../lib/goldbrixSend';
 const HRP = 'bn';
 const DERIVATION_PATH = "m/84'/0'/0'/0/0";
 const STORE_KEY = 'goldbrix_wallet_v1';
-const API_BASE = 'https://89-167-36-203.sslip.io';
+const API_BASE = 'https://89-167-36-203.sslip.io/explorer-api';
 
 function hexToBytes(hex: string): Uint8Array {
   if (hex.length % 2 !== 0) throw new Error('Invalid hex');
@@ -138,11 +138,10 @@ export default function HomeScreen() {
   }, []);
 
   useEffect(() => {
-    if (address) {
-      fetchAddressSummary(address);
-      fetchAddressTxs(address);
-    }
-  }, [address]);
+  if (address) {
+    void refreshAll();
+  }
+}, [address]);
 
   const saveWallet = async (wallet: StoredWallet) => {
     await SecureStore.setItemAsync(STORE_KEY, JSON.stringify(wallet));
@@ -165,7 +164,7 @@ export default function HomeScreen() {
       setTxCount(data.tx_count ?? 0);
       setNetwork(data.network ?? 'goldbrix-mainnet');
     } catch (err) {
-      console.log('wallet balance fetch failed');
+      console.log('wallet balance fetch failed', err);
     } finally {
       setBalanceLoading(false);
     }
@@ -180,25 +179,27 @@ export default function HomeScreen() {
         throw new Error(`HTTP ${res.status}`);
       }
 
-      const data: AddressTxs = await res.json();
-      const txList = Array.isArray(data) ? data : Array.isArray((data as any).items) ? (data as any).items : [];
-    console.log('TXS_FETCH_LEN', txList.length);
-    console.log('TXS_FETCH_FIRST', JSON.stringify(txList[0] || null));
-    setTxs(txList);
+      const raw: any = await res.json();
+      const txList: Array<any> = Array.isArray(raw)
+        ? raw
+        : Array.isArray(raw?.items)
+        ? raw.items
+        : [];
+      console.log('TXS_FETCH_LEN', txList.length);
+      console.log('TXS_FETCH_FIRST', JSON.stringify(txList[0] || null));
+      setTxs(txList);
     } catch (err) {
-      console.log('transaction history fetch failed');
+      console.log('transaction history fetch failed', err);
     } finally {
       setTxLoading(false);
     }
   };
 
   const refreshAll = async () => {
-    if (!address) return;
-    await Promise.all([
-      fetchAddressSummary(address),
-      fetchAddressTxs(address),
-    ]);
-  };
+  if (!address) return;
+  await fetchAddressSummary(address);
+  await fetchAddressTxs(address);
+};
 
   const generateWallet = async () => {
     try {
@@ -366,14 +367,30 @@ Amount: ${amount} GOLDBRIX`,
     }
       setSending(true);
 
-      console.log('SEND_TXS_LEN', txs.length);
-    console.log('SEND_SPENDABLE_LEN', txs.filter((u) => u?.spendable === true && Number(u?.amount_sats || 0) > 0).length);
-    console.log('SEND_FIRST_TX', JSON.stringify(txs[0] || null));
+      let liveTxs = txs;
+
+      if (address && !liveTxs.some((u) => u?.spendable === true && Number(u?.amount_sats || 0) > 0)) {
+        console.log('SEND_PRECHECK_REFETCH');
+        const refreshRes = await fetch(`${API_BASE}/api/address/${encodeURIComponent(address)}/txs`);
+        if (refreshRes.ok) {
+          const refreshData: AddressTxs = await refreshRes.json();
+          liveTxs = Array.isArray(refreshData)
+            ? refreshData
+            : Array.isArray((refreshData as any).items)
+            ? (refreshData as any).items
+            : [];
+          setTxs(liveTxs);
+        }
+      }
+
+      console.log('SEND_TXS_LEN', liveTxs.length);
+    console.log('SEND_SPENDABLE_LEN', liveTxs.filter((u) => u?.spendable === true && Number(u?.amount_sats || 0) > 0).length);
+    console.log('SEND_FIRST_TX', JSON.stringify(liveTxs[0] || null));
     const signed = buildSignedRawTx({
         mnemonic,
         toAddress: dest,
         amountGbx: amount,
-        utxos: txs,
+        utxos: liveTxs,
       });
 
     const feeGoldbrix = (Number(signed.feeSats) / 100000000).toFixed(8);

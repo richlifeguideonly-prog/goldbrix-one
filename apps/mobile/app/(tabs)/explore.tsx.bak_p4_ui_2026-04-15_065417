@@ -1,0 +1,411 @@
+import { useEffect, useState } from 'react';
+import * as SecureStore from 'expo-secure-store';
+import {
+  Alert,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+
+const API_BASE = 'https://89-167-36-203.sslip.io/pool-api';
+const WALLET_STORE_KEY = 'goldbrix_wallet_v1';
+const POOL_CLIENT_KEY = 'goldbrix_pool_client_id_v1';
+
+type StoredWallet = {
+  address?: string;
+  mnemonic?: string;
+};
+
+type PoolWorker = {
+  worker_name: string;
+  status: string;
+  last_share_at: string | null;
+  hashrate_1m: number;
+  hashrate_15m: number;
+  hashrate_24h: number;
+};
+
+type PoolMe = {
+  ok: boolean;
+  account_uuid?: string;
+  client_id?: string;
+  payout_address?: string;
+  min_payout_gbx?: string;
+  pending_gbx?: string;
+  confirmed_gbx?: string;
+  paid_gbx?: string;
+  total_paid_gbx?: string;
+  workers?: PoolWorker[];
+  updated_at?: number;
+  error?: string;
+  message?: string;
+};
+
+function makeClientId() {
+  return `gbx-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+export default function ExploreScreen() {
+  const [loading, setLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [clientId, setClientId] = useState('');
+  const [draftPayoutAddress, setDraftPayoutAddress] = useState('');
+  const [status, setStatus] = useState<PoolMe | null>(null);
+
+  const fetchMe = async (cid?: string) => {
+    try {
+      const useClientId = String(cid || clientId).trim();
+      if (!useClientId) return;
+
+      setLoading(true);
+
+      const res = await fetch(
+        `${API_BASE}/api/pool/me?client_id=${encodeURIComponent(useClientId)}`
+      );
+      const data: PoolMe = await res.json();
+
+      if (!res.ok || data.ok === false) {
+        throw new Error(data?.message || data?.error || `HTTP ${res.status}`);
+      }
+
+      setStatus(data);
+
+      if (data.payout_address) {
+        setDraftPayoutAddress(data.payout_address);
+      }
+    } catch (err: any) {
+      console.log('pool me failed', err);
+      Alert.alert('Pool API Error', err?.message || 'Failed to load pool account');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const registerPoolAccount = async (cid: string, payoutAddress: string, showAlert = false) => {
+    const cleanClientId = String(cid || '').trim();
+    const cleanAddress = String(payoutAddress || '').trim();
+
+    if (!cleanClientId) throw new Error('Missing pool client ID');
+    if (!cleanAddress) throw new Error('Missing payout address');
+
+    const res = await fetch(`${API_BASE}/api/pool/account/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ client_id: cleanClientId, payout_address: cleanAddress }),
+    });
+
+    const data: PoolMe = await res.json();
+
+    if (!res.ok || data.ok === false) {
+      throw new Error(data?.message || data?.error || `HTTP ${res.status}`);
+    }
+
+    setStatus(data);
+    setDraftPayoutAddress(data.payout_address || cleanAddress);
+
+    if (showAlert) {
+      Alert.alert('Pool Ready', 'Pool account registered successfully');
+    }
+  };
+
+  const savePayoutAddress = async () => {
+    try {
+      const cleanClientId = clientId.trim();
+      const cleanAddress = draftPayoutAddress.trim();
+
+      if (!cleanClientId) {
+        Alert.alert('Pool API Error', 'Missing pool client ID');
+        return;
+      }
+
+      if (!cleanAddress) {
+        Alert.alert('Invalid address', 'Please enter a payout address.');
+        return;
+      }
+
+      setActionLoading(true);
+
+      const res = await fetch(`${API_BASE}/api/pool/payout-address`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ client_id: cleanClientId, payout_address: cleanAddress }),
+      });
+
+      const data: PoolMe = await res.json();
+
+      if (!res.ok || data.ok === false) {
+        throw new Error(data?.message || data?.error || `HTTP ${res.status}`);
+      }
+
+      await fetchMe(cleanClientId);
+      Alert.alert('Saved', 'Payout address updated');
+    } catch (err: any) {
+      console.log('update payout failed', err);
+      Alert.alert('Pool API Error', err?.message || 'Failed to update payout address');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const joinPool = async () => {
+    try {
+      const cleanClientId = clientId.trim();
+      const cleanAddress = draftPayoutAddress.trim();
+
+      if (!cleanClientId) {
+        Alert.alert('Pool API Error', 'Missing pool client ID');
+        return;
+      }
+
+      if (!cleanAddress) {
+        Alert.alert('Invalid address', 'Please enter a payout address.');
+        return;
+      }
+
+      setActionLoading(true);
+      await registerPoolAccount(cleanClientId, cleanAddress, true);
+      await fetchMe(cleanClientId);
+    } catch (err: any) {
+      console.log('join pool failed', err);
+      Alert.alert('Pool API Error', err?.message || 'Failed to join pool');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const init = async () => {
+      try {
+        let cid = (await SecureStore.getItemAsync(POOL_CLIENT_KEY)) || '';
+        if (!cid) {
+          cid = makeClientId();
+          await SecureStore.setItemAsync(POOL_CLIENT_KEY, cid);
+        }
+        setClientId(cid);
+
+        const raw = await SecureStore.getItemAsync(WALLET_STORE_KEY);
+        let walletAddress = '';
+
+        if (raw) {
+          try {
+            const parsed: StoredWallet = JSON.parse(raw);
+            walletAddress = String(parsed.address || '').trim();
+          } catch {}
+        }
+
+        if (walletAddress) {
+          setDraftPayoutAddress(walletAddress);
+
+          try {
+            await registerPoolAccount(cid, walletAddress, false);
+          } catch (err) {
+            console.log('initial pool register skipped', err);
+          }
+        }
+
+        await fetchMe(cid);
+      } catch (err: any) {
+        console.log('pool init failed', err);
+        Alert.alert('Pool API Error', err?.message || 'Failed to initialize pool screen');
+      }
+    };
+
+    init();
+  }, []);
+
+  return (
+    <SafeAreaView style={styles.screen}>
+      <ScrollView
+        style={styles.screen}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={styles.title}>Mining</Text>
+        <Text style={styles.subtitle}>Goldbrix Wallet + Pool</Text>
+
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Pool Account</Text>
+
+          <Text style={styles.label}>Client ID</Text>
+          <Text style={styles.value}>{clientId || '-'}</Text>
+
+          <Text style={[styles.label, styles.mt]}>Account UUID</Text>
+          <Text style={styles.value}>{status?.account_uuid || '-'}</Text>
+
+          <Text style={[styles.label, styles.mt]}>Updated At</Text>
+          <Text style={styles.value}>{status?.updated_at ?? '-'}</Text>
+
+          <TouchableOpacity style={styles.button} onPress={joinPool} disabled={actionLoading}>
+            <Text style={styles.buttonText}>
+              {actionLoading ? 'Please wait...' : 'Join Pool'}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.button} onPress={() => fetchMe()} disabled={loading}>
+            <Text style={styles.buttonText}>
+              {loading ? 'Loading...' : 'Refresh Pool Status'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Payout Address</Text>
+
+          <TextInput
+            style={styles.input}
+            multiline
+            value={draftPayoutAddress}
+            onChangeText={setDraftPayoutAddress}
+            placeholder="Enter bn1 / C / S address"
+            placeholderTextColor="#6B7280"
+          />
+
+          <TouchableOpacity style={styles.button} onPress={savePayoutAddress} disabled={actionLoading}>
+            <Text style={styles.buttonText}>
+              {actionLoading ? 'Please wait...' : 'Save Payout Address'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Pool Balances</Text>
+
+          <Text style={styles.label}>Current Payout Address</Text>
+          <Text style={styles.value}>{status?.payout_address || draftPayoutAddress || '-'}</Text>
+
+          <Text style={[styles.label, styles.mt]}>Min Payout</Text>
+          <Text style={styles.value}>{status?.min_payout_gbx ?? '0.00000000'} GOLDBRIX</Text>
+
+          <Text style={[styles.label, styles.mt]}>Pending</Text>
+          <Text style={styles.value}>{status?.pending_gbx ?? '0.00000000'} GOLDBRIX</Text>
+
+          <Text style={[styles.label, styles.mt]}>Confirmed</Text>
+          <Text style={styles.value}>{status?.confirmed_gbx ?? '0.00000000'} GOLDBRIX</Text>
+
+          <Text style={[styles.label, styles.mt]}>Paid</Text>
+          <Text style={styles.value}>{status?.paid_gbx ?? '0.00000000'} GOLDBRIX</Text>
+
+          <Text style={[styles.label, styles.mt]}>Total Paid</Text>
+          <Text style={styles.value}>{status?.total_paid_gbx ?? '0.00000000'} GOLDBRIX</Text>
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Workers</Text>
+
+          {!status?.workers || status.workers.length === 0 ? (
+            <Text style={styles.value}>No workers yet</Text>
+          ) : (
+            status.workers.map((worker, index) => (
+              <View key={`${worker.worker_name}-${index}`} style={styles.workerBox}>
+                <Text style={styles.label}>Worker</Text>
+                <Text style={styles.value}>{worker.worker_name}</Text>
+
+                <Text style={[styles.label, styles.mt]}>Status</Text>
+                <Text style={styles.value}>{worker.status}</Text>
+
+                <Text style={[styles.label, styles.mt]}>Last Share</Text>
+                <Text style={styles.value}>{worker.last_share_at || '-'}</Text>
+
+                <Text style={[styles.label, styles.mt]}>Hashrate 1m</Text>
+                <Text style={styles.value}>{worker.hashrate_1m ?? 0}</Text>
+
+                <Text style={[styles.label, styles.mt]}>Hashrate 15m</Text>
+                <Text style={styles.value}>{worker.hashrate_15m ?? 0}</Text>
+
+                <Text style={[styles.label, styles.mt]}>Hashrate 24h</Text>
+                <Text style={styles.value}>{worker.hashrate_24h ?? 0}</Text>
+              </View>
+            ))
+          )}
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: '#020B22',
+  },
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 40,
+  },
+  title: {
+    fontSize: 34,
+    fontWeight: '800',
+    color: '#F4C542',
+    textAlign: 'center',
+    marginTop: 12,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#D1D5DB',
+    textAlign: 'center',
+    marginTop: 8,
+    marginBottom: 24,
+  },
+  card: {
+    backgroundColor: '#08152F',
+    borderRadius: 22,
+    padding: 20,
+    marginBottom: 18,
+  },
+  sectionTitle: {
+    color: '#F4C542',
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 14,
+  },
+  label: {
+    color: '#F4C542',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  value: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    marginTop: 6,
+  },
+  mt: {
+    marginTop: 16,
+  },
+  input: {
+    minHeight: 84,
+    borderRadius: 18,
+    backgroundColor: '#0B1736',
+    color: '#FFFFFF',
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#1F2A44',
+    textAlignVertical: 'top',
+  },
+  button: {
+    marginTop: 14,
+    borderRadius: 18,
+    borderWidth: 1.5,
+    borderColor: '#F4C542',
+    paddingVertical: 18,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#1A2742',
+  },
+  buttonText: {
+    color: '#F4C542',
+    fontSize: 15,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  workerBox: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#1F2A44',
+  },
+});

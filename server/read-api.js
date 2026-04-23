@@ -12,7 +12,7 @@ const DATADIR = process.env.GBX_DATADIR || '/root/goldbrix_mainnet/node2';
 function runCli(args) {
   return new Promise((resolve, reject) => {
     const cmd = `${CLI} -rpcconnect=${RPC_CONNECT} -rpcport=${RPC_PORT} -datadir=${DATADIR} ${args}`;
-    exec(cmd, (error, stdout, stderr) => {
+    exec(cmd, { maxBuffer: 64 * 1024 * 1024 }, (error, stdout, stderr) => {
       if (error) {
         reject(new Error((stderr || error.message).trim()));
         return;

@@ -1,0 +1,478 @@
+import { useEffect, useState } from 'react';
+import * as SecureStore from 'expo-secure-store';
+import {
+  Alert,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+
+const API_BASE = 'https://89-167-36-203.sslip.io/miner-api';
+const WALLET_STORE_KEY = 'goldbrix_wallet_v1';
+const MINER_CLIENT_KEY = 'goldbrix_miner_client_id_v1';
+
+type StoredWallet = {
+  address?: string;
+  mnemonic?: string;
+};
+
+type MiningStatus = {
+  ok: boolean;
+  service: string;
+  backend: string;
+  client_id?: string;
+  server_busy?: boolean;
+  miner_service: string;
+  mining_active: boolean;
+  network: string;
+  best_block_height: number;
+  best_block_hash: string;
+  peer_count: number;
+  synced: boolean;
+  difficulty: number;
+  networkhashps: number;
+  pooledtx: number;
+  currentblocktx: number;
+  currentblockweight: number;
+  mempool_size: number;
+  mempool_bytes: number;
+  payout_address: string;
+  payout_total_gbx: string;
+  payout_spendable_gbx: string;
+  payout_immature_gbx: string;
+  payout_tx_count: number;
+  payout_utxo_count: number;
+  payout_last_txid: string | null;
+  payout_error: string | null;
+  updated_at: number;
+  message?: string;
+  error?: string;
+};
+
+function makeClientId() {
+  return `gbx-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+export default function ExploreScreen() {
+  const [status, setStatus] = useState<MiningStatus | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [draftPayoutAddress, setDraftPayoutAddress] = useState('');
+  const [clientId, setClientId] = useState('');
+
+  const fetchStatus = async (overrideClientId?: string, overrideAddress?: string) => {
+    try {
+      const cid = String(overrideClientId ?? clientId).trim();
+      const hint = String(
+        overrideAddress !== undefined ? overrideAddress : draftPayoutAddress
+      ).trim();
+
+      if (!cid) return;
+
+      setLoading(true);
+
+      const params = new URLSearchParams({ client_id: cid });
+      if (hint) params.set('payout_address', hint);
+
+      const res = await fetch(`${API_BASE}/api/status?${params.toString()}`);
+      const data: MiningStatus = await res.json();
+
+      if (!res.ok || data.ok === false) {
+        throw new Error((data as any)?.message || `HTTP ${res.status}`);
+      }
+
+      setStatus(data);
+
+      if (data.payout_address) {
+        setDraftPayoutAddress((prev) => {
+          if (!prev.trim()) return data.payout_address;
+          if (data.mining_active) return data.payout_address;
+          return prev;
+        });
+      }
+    } catch (err: any) {
+      console.log('miner status fetch failed', err);
+      Alert.alert('API Error', err?.message || 'Failed to fetch Goldbrix mining status');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const init = async () => {
+      try {
+        let cid = (await SecureStore.getItemAsync(MINER_CLIENT_KEY)) || '';
+        if (!cid) {
+          cid = makeClientId();
+          await SecureStore.setItemAsync(MINER_CLIENT_KEY, cid);
+        }
+        setClientId(cid);
+
+        const raw = await SecureStore.getItemAsync(WALLET_STORE_KEY);
+        let walletAddress = '';
+
+        if (raw) {
+          try {
+            const parsed: StoredWallet = JSON.parse(raw);
+            walletAddress = String(parsed.address || '').trim();
+          } catch {}
+        }
+
+        if (walletAddress) {
+          setDraftPayoutAddress(walletAddress);
+        }
+
+        await fetchStatus(cid, walletAddress);
+      } catch (err: any) {
+        console.log('miner init failed', err);
+        Alert.alert('API Error', err?.message || 'Failed to initialize mining screen');
+      }
+    };
+
+    init();
+  }, []);
+
+  const savePayoutAddress = async () => {
+    try {
+      const cid = clientId.trim();
+      const clean = draftPayoutAddress.trim();
+
+      if (!cid) {
+        Alert.alert('API Error', 'Missing miner client ID');
+        return;
+      }
+
+      if (!clean) {
+        Alert.alert('Invalid address', 'Please enter a mining address.');
+        return;
+      }
+
+      setActionLoading(true);
+
+      const res = await fetch(`${API_BASE}/api/payout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ client_id: cid, address: clean }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || data.ok === false) {
+        throw new Error(data?.message || `HTTP ${res.status}`);
+      }
+
+      setDraftPayoutAddress(clean);
+      await fetchStatus(cid, clean);
+      Alert.alert('Address Ready', 'Mining address validated successfully');
+    } catch (err: any) {
+      console.log('validate mining address failed', err);
+      Alert.alert('API Error', err?.message || 'Failed to validate mining address');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const startMining = async () => {
+    try {
+      const cid = clientId.trim();
+      const clean = draftPayoutAddress.trim();
+
+      if (!cid) {
+        Alert.alert('API Error', 'Missing miner client ID');
+        return;
+      }
+
+      if (!clean) {
+        Alert.alert('Invalid address', 'Please enter the address you want to mine to.');
+        return;
+      }
+
+      setActionLoading(true);
+
+      const res = await fetch(`${API_BASE}/api/miner/start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ client_id: cid, payout_address: clean }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || data.ok === false) {
+        throw new Error(data?.message || `HTTP ${res.status}`);
+      }
+
+      setStatus(data);
+      setDraftPayoutAddress(data?.payout_address || clean);
+      Alert.alert('Mining Started', 'Mining started for your selected address');
+    } catch (err: any) {
+      console.log('start mining failed', err);
+      Alert.alert('API Error', err?.message || 'Failed to start mining');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const stopMining = async () => {
+    try {
+      const cid = clientId.trim();
+
+      if (!cid) {
+        Alert.alert('API Error', 'Missing miner client ID');
+        return;
+      }
+
+      setActionLoading(true);
+
+      const res = await fetch(`${API_BASE}/api/miner/stop`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ client_id: cid }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || data.ok === false) {
+        throw new Error(data?.message || `HTTP ${res.status}`);
+      }
+
+      await fetchStatus(cid, draftPayoutAddress);
+      Alert.alert('Mining Stopped', 'Goldbrix mining stopped');
+    } catch (err: any) {
+      console.log('stop mining failed', err);
+      Alert.alert('API Error', err?.message || 'Failed to stop mining');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  return (
+    <SafeAreaView style={styles.screen}>
+      <ScrollView
+        style={styles.screen}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={styles.title}>Mining</Text>
+        <Text style={styles.subtitle}>Goldbrix Wallet + Miner</Text>
+
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Node Status</Text>
+
+          <Text style={styles.label}>Network</Text>
+          <Text style={styles.value}>{status?.network ?? '-'}</Text>
+
+          <Text style={[styles.label, styles.mt]}>Mining Active</Text>
+          <Text style={styles.value}>
+            {loading ? 'Loading...' : status ? (status.mining_active ? 'Yes' : 'No') : '-'}
+          </Text>
+
+          <Text style={[styles.label, styles.mt]}>Server Busy</Text>
+          <Text style={styles.value}>
+            {loading ? 'Loading...' : status ? (status.server_busy ? 'Yes' : 'No') : '-'}
+          </Text>
+
+          <Text style={[styles.label, styles.mt]}>Miner Service</Text>
+          <Text style={styles.value}>{status?.miner_service ?? '-'}</Text>
+
+          <Text style={[styles.label, styles.mt]}>Synced</Text>
+          <Text style={styles.value}>
+            {loading ? 'Loading...' : status ? (status.synced ? 'Yes' : 'No') : '-'}
+          </Text>
+
+          <Text style={[styles.label, styles.mt]}>Best Block Height</Text>
+          <Text style={styles.value}>{status?.best_block_height ?? '-'}</Text>
+
+          <Text style={[styles.label, styles.mt]}>Peer Count</Text>
+          <Text style={styles.value}>{status?.peer_count ?? '-'}</Text>
+
+          <Text style={[styles.label, styles.mt]}>Best Block Hash</Text>
+          <Text style={styles.value}>{status?.best_block_hash ?? '-'}</Text>
+
+          <Text style={[styles.label, styles.mt]}>Updated At</Text>
+          <Text style={styles.value}>{status?.updated_at ?? '-'}</Text>
+
+          <TouchableOpacity style={styles.button} onPress={() => fetchStatus()}>
+            <Text style={styles.buttonText}>Refresh Mining Status</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Mining Balance</Text>
+
+          <Text style={styles.label}>Mining Address</Text>
+          <Text style={styles.value}>{status?.payout_address || draftPayoutAddress || 'No address selected yet'}</Text>
+
+          <Text style={[styles.label, styles.mt]}>Total Balance</Text>
+          <Text style={styles.value}>{status?.payout_total_gbx ?? '0.00000000'} GOLDBRIX</Text>
+
+          <Text style={[styles.label, styles.mt]}>Spendable Balance</Text>
+          <Text style={styles.value}>{status?.payout_spendable_gbx ?? '0.00000000'} GOLDBRIX</Text>
+
+          <Text style={[styles.label, styles.mt]}>Immature Balance</Text>
+          <Text style={styles.value}>{status?.payout_immature_gbx ?? '0.00000000'} GOLDBRIX</Text>
+
+          <Text style={[styles.label, styles.mt]}>Transactions</Text>
+          <Text style={styles.value}>{status?.payout_tx_count ?? 0}</Text>
+
+          <Text style={[styles.label, styles.mt]}>UTXO Count</Text>
+          <Text style={styles.value}>{status?.payout_utxo_count ?? 0}</Text>
+
+          {status?.payout_last_txid ? (
+            <>
+              <Text style={[styles.label, styles.mt]}>Last TXID</Text>
+              <Text style={styles.value}>{status.payout_last_txid}</Text>
+            </>
+          ) : null}
+
+          {status?.payout_error ? (
+            <>
+              <Text style={[styles.label, styles.mt]}>Payout Error</Text>
+              <Text style={styles.value}>{status.payout_error}</Text>
+            </>
+          ) : null}
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Mining Address</Text>
+
+          <TextInput
+            style={styles.input}
+            multiline
+            value={draftPayoutAddress}
+            onChangeText={setDraftPayoutAddress}
+            placeholder="Enter bn1 / C / S address"
+            placeholderTextColor="#6B7280"
+          />
+
+          <TouchableOpacity style={styles.button} onPress={savePayoutAddress} disabled={actionLoading}>
+            <Text style={styles.buttonText}>
+              {actionLoading ? 'Please wait...' : 'Validate Mining Address'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Mining Control</Text>
+
+          <TouchableOpacity style={styles.button} onPress={startMining} disabled={actionLoading}>
+            <Text style={styles.buttonText}>
+              {actionLoading ? 'Please wait...' : 'Start Mining'}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.button} onPress={stopMining} disabled={actionLoading}>
+            <Text style={styles.buttonText}>
+              {actionLoading ? 'Please wait...' : 'Stop Mining'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Mining Stats</Text>
+
+          <Text style={styles.label}>Difficulty</Text>
+          <Text style={styles.value}>{status?.difficulty ?? 0}</Text>
+
+          <Text style={[styles.label, styles.mt]}>Network Hashrate</Text>
+          <Text style={styles.value}>{status?.networkhashps ?? 0}</Text>
+
+          <Text style={[styles.label, styles.mt]}>Pooled TX</Text>
+          <Text style={styles.value}>{status?.pooledtx ?? 0}</Text>
+
+          <Text style={[styles.label, styles.mt]}>Current Block TX</Text>
+          <Text style={styles.value}>{status?.currentblocktx ?? 0}</Text>
+
+          <Text style={[styles.label, styles.mt]}>Current Block Weight</Text>
+          <Text style={styles.value}>{status?.currentblockweight ?? 0}</Text>
+
+          <Text style={[styles.label, styles.mt]}>Mempool Size</Text>
+          <Text style={styles.value}>{status?.mempool_size ?? 0}</Text>
+
+          <Text style={[styles.label, styles.mt]}>Mempool Bytes</Text>
+          <Text style={styles.value}>{status?.mempool_bytes ?? 0}</Text>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: '#020B22',
+  },
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 40,
+  },
+  title: {
+    fontSize: 34,
+    fontWeight: '800',
+    color: '#F4C542',
+    textAlign: 'center',
+    marginTop: 12,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#D1D5DB',
+    textAlign: 'center',
+    marginTop: 8,
+    marginBottom: 24,
+  },
+  card: {
+    backgroundColor: '#08152F',
+    borderRadius: 22,
+    padding: 20,
+    marginBottom: 18,
+  },
+  sectionTitle: {
+    color: '#F4C542',
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 14,
+  },
+  label: {
+    color: '#F4C542',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  value: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    marginTop: 6,
+  },
+  mt: {
+    marginTop: 16,
+  },
+  input: {
+    minHeight: 84,
+    borderRadius: 18,
+    backgroundColor: '#0B1736',
+    color: '#FFFFFF',
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#1F2A44',
+    textAlignVertical: 'top',
+  },
+  button: {
+    marginTop: 14,
+    borderRadius: 18,
+    borderWidth: 1.5,
+    borderColor: '#F4C542',
+    paddingVertical: 18,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#1A2742',
+  },
+  buttonText: {
+    color: '#F4C542',
+    fontSize: 15,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+});

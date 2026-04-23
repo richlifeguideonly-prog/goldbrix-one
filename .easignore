@@ -1,0 +1,7 @@
+
+# keep mobile native android for EAS build
+!apps/mobile/android
+!apps/mobile/android/**
+!apps/mobile/app.json
+!apps/mobile/eas.json
+!apps/mobile/assets/**

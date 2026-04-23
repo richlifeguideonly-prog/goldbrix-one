@@ -2,7 +2,7 @@
   "expo": {
     "name": "GOLDBRIX One",
     "slug": "goldbrix-one",
-    "version": "1.0.0",
+    "version": "1.0.10",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "goldbrixone",
@@ -12,15 +12,14 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.goldbrix.one",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "backgroundColor": "#FFFFFF",
+        "foregroundImage": "./assets/images/android-icon-foreground.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-
+      "versionCode": 11
     },
     "web": {
       "output": "static",
