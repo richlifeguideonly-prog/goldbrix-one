@@ -19,7 +19,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: 'Wallet',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
         }}
       />
@@ -28,6 +28,27 @@ export default function TabLayout() {
         options={{
           title: 'Mining',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="hammer.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="launchpad"
+        options={{
+          title: 'Launchpad',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="hammer.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="buy"
+        options={{
+          title: 'Buy GBX',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: 'Settings',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
         }}
       />
     </Tabs>
