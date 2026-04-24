@@ -1,10 +1,12 @@
 import React, { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useI18n } from '../../lib/i18n';
 
 const NETWORKS = ['Solana USDC', 'BNB USDC', 'Ethereum USDC'];
 const RATE = 100;
 
 export default function BuyGbxScreen() {
+  const { t } = useI18n();
   const [network, setNetwork] = useState('Solana USDC');
   const [amount, setAmount] = useState('100');
   const gbx = useMemo(() => {
@@ -15,11 +17,11 @@ export default function BuyGbxScreen() {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Buy GBX</Text>
-      <Text style={styles.subtitle}>USDC deposit watcher + GBX treasury payout</Text>
+      <Text style={styles.title}>{t('buy.title')}</Text>
+      <Text style={styles.subtitle}>{t('buy.subtitle')}</Text>
 
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>1. Select USDC Network</Text>
+        <Text style={styles.cardTitle}>1. {t('buy.network')}</Text>
         <View style={styles.row}>
           {NETWORKS.map((n) => (
             <Pressable
@@ -35,7 +37,7 @@ export default function BuyGbxScreen() {
 
       <View style={styles.card}>
         <Text style={styles.cardTitle}>2. Amount</Text>
-        <Text style={styles.label}>USDC Amount</Text>
+        <Text style={styles.label}>{t('buy.amount')}</Text>
         <TextInput
           value={amount}
           onChangeText={setAmount}
@@ -44,7 +46,7 @@ export default function BuyGbxScreen() {
           placeholderTextColor="#7B8495"
           style={styles.input}
         />
-        <Text style={styles.estimate}>Estimated receive: {gbx} GBX</Text>
+        <Text style={styles.estimate}>{t('buy.estimate')}: {gbx} GBX</Text>
         <Text style={styles.small}>Reference UI rate: 1 USDC = {RATE} GBX</Text>
       </View>
 
@@ -63,8 +65,16 @@ export default function BuyGbxScreen() {
         <Text style={styles.item}>Target chain: {network}</Text>
       </View>
 
-      <Pressable style={styles.button}>
-        <Text style={styles.buttonText}>Create Buy Order</Text>
+      <Pressable
+        style={styles.button}
+        onPress={() =>
+          Alert.alert(
+            'Buy Order Draft',
+            `Network: ${network}\nUSDC: ${amount}\nEstimated GBX: ${gbx}\n\nBackend watcher comes next: /api/buy/order`
+          )
+        }
+      >
+        <Text style={styles.buttonText}>{t('buy.order')}</Text>
       </Pressable>
     </ScrollView>
   );

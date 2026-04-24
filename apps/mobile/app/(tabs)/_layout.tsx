@@ -1,81 +1,53 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { Text } from 'react-native';
-
-const gold = '#F5C542';
-const bg = '#06101F';
-const tabBg = '#F7F7F7';
+import { I18nProvider, useI18n } from '../../lib/i18n';
 
 function TabIcon({ label, color }: { label: string; color: string }) {
   return (
-    <Text style={{ color, fontSize: 20, fontWeight: '900' }}>
+    <Text style={{ color, fontSize: 21, fontWeight: '900' }}>
       {label}
     </Text>
   );
 }
 
-export default function TabLayout() {
+function TabsNavigator() {
+  const { t } = useI18n();
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#0891B2',
-        tabBarInactiveTintColor: '#8B8B8B',
+        tabBarActiveTintColor: '#F5C542',
+        tabBarInactiveTintColor: '#9AA3B2',
         tabBarStyle: {
-          backgroundColor: tabBg,
-          height: 76,
-          paddingTop: 6,
-          paddingBottom: 10,
-          borderTopWidth: 0,
+          backgroundColor: '#06101F',
+          height: 82,
+          paddingTop: 7,
+          paddingBottom: 12,
+          borderTopWidth: 1,
+          borderTopColor: '#23395D',
         },
         tabBarLabelStyle: {
           fontSize: 11,
-          fontWeight: '700',
+          fontWeight: '900',
         },
       }}
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <TabIcon label="◆" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="wallet"
-        options={{
-          title: 'Wallet',
-          tabBarIcon: ({ color }) => <TabIcon label="₿" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="buy"
-        options={{
-          title: 'Buy',
-          tabBarIcon: ({ color }) => <TabIcon label="$" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="launchpad"
-        options={{
-          title: 'Launch',
-          tabBarIcon: ({ color }) => <TabIcon label="★" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: 'Mining',
-          tabBarIcon: ({ color }) => <TabIcon label="⚒" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          title: 'Settings',
-          tabBarIcon: ({ color }) => <TabIcon label="⚙" color={color} />,
-        }}
-      />
+      <Tabs.Screen name="index" options={{ title: t('tab.home'), tabBarIcon: ({ color }) => <TabIcon label="◆" color={color} /> }} />
+      <Tabs.Screen name="wallet" options={{ title: t('tab.wallet'), tabBarIcon: ({ color }) => <TabIcon label="₿" color={color} /> }} />
+      <Tabs.Screen name="buy" options={{ title: t('tab.buy'), tabBarIcon: ({ color }) => <TabIcon label="$" color={color} /> }} />
+      <Tabs.Screen name="launchpad" options={{ title: t('tab.launch'), tabBarIcon: ({ color }) => <TabIcon label="★" color={color} /> }} />
+      <Tabs.Screen name="explore" options={{ title: t('tab.mining'), tabBarIcon: ({ color }) => <TabIcon label="⚒" color={color} /> }} />
+      <Tabs.Screen name="settings" options={{ title: t('tab.settings'), tabBarIcon: ({ color }) => <TabIcon label="⚙" color={color} /> }} />
     </Tabs>
+  );
+}
+
+export default function TabLayout() {
+  return (
+    <I18nProvider>
+      <TabsNavigator />
+    </I18nProvider>
   );
 }

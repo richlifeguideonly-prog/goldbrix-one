@@ -1,41 +1,50 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Lang, useI18n } from '../../lib/i18n';
 
-const languages = ['English', 'Deutsch', 'Română', 'العربية', '中文'];
+const languages: { code: Lang; label: string }[] = [
+  { code: 'en', label: 'English' },
+  { code: 'de', label: 'Deutsch' },
+  { code: 'ro', label: 'Română' },
+  { code: 'ar', label: 'العربية' },
+  { code: 'zh', label: '中文' },
+];
 
 export default function SettingsScreen() {
-  const [language, setLanguage] = useState('English');
+  const { lang, setLang, t } = useI18n();
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Settings</Text>
-      <Text style={styles.subtitle}>Security, language and app configuration</Text>
+      <Text style={styles.title}>{t('settings.title')}</Text>
+      <Text style={styles.subtitle}>{t('settings.subtitle')}</Text>
 
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Language</Text>
+        <Text style={styles.cardTitle}>{t('settings.language')}</Text>
         <View style={styles.langGrid}>
-          {languages.map((l) => (
+          {languages.map((item) => (
             <Pressable
-              key={l}
-              onPress={() => setLanguage(l)}
-              style={[styles.lang, language === l && styles.langActive]}
+              key={item.code}
+              onPress={() => setLang(item.code)}
+              style={[styles.lang, lang === item.code && styles.langActive]}
             >
-              <Text style={[styles.langText, language === l && styles.langTextActive]}>{l}</Text>
+              <Text style={[styles.langText, lang === item.code && styles.langTextActive]}>
+                {item.label}
+              </Text>
             </Pressable>
           ))}
         </View>
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Wallet Security</Text>
-        <Text style={styles.item}>Local signing stays active</Text>
-        <Text style={styles.item}>Seed phrase remains on device</Text>
-        <Text style={styles.item}>No cloud seed storage</Text>
+        <Text style={styles.cardTitle}>{t('settings.security')}</Text>
+        <Text style={styles.item}>{t('settings.local')}</Text>
+        <Text style={styles.item}>{t('settings.seed')}</Text>
+        <Text style={styles.item}>{t('settings.cloud')}</Text>
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>App Status</Text>
-        <Text style={styles.item}>Version: 1.0.14 UI v2 target</Text>
+        <Text style={styles.cardTitle}>{t('settings.status')}</Text>
+        <Text style={styles.item}>Version: 1.0.15 navigation-i18n</Text>
         <Text style={styles.item}>Network: goldbrix-mainnet</Text>
         <Text style={styles.item}>API: explorer-api / miner-api</Text>
       </View>

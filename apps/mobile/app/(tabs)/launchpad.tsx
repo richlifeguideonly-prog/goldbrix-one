@@ -1,26 +1,28 @@
 import React, { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useI18n } from '../../lib/i18n';
 
 export default function LaunchpadScreen() {
+  const { t } = useI18n();
   const [name, setName] = useState('Gold Meme');
   const [ticker, setTicker] = useState('GMEME');
   const [supply, setSupply] = useState('1000000000');
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Launchpad</Text>
-      <Text style={styles.subtitle}>Create coins powered by GOLDBRIX</Text>
+      <Text style={styles.title}>{t('launch.title')}</Text>
+      <Text style={styles.subtitle}>{t('launch.subtitle')}</Text>
 
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Create Coin</Text>
 
-        <Text style={styles.label}>Coin Name</Text>
+        <Text style={styles.label}>{t('launch.name')}</Text>
         <TextInput value={name} onChangeText={setName} style={styles.input} placeholderTextColor="#7B8495" />
 
-        <Text style={styles.label}>Ticker</Text>
+        <Text style={styles.label}>{t('launch.ticker')}</Text>
         <TextInput value={ticker} onChangeText={setTicker} style={styles.input} autoCapitalize="characters" placeholderTextColor="#7B8495" />
 
-        <Text style={styles.label}>Supply</Text>
+        <Text style={styles.label}>{t('launch.supply')}</Text>
         <TextInput value={supply} onChangeText={setSupply} style={styles.input} keyboardType="number-pad" placeholderTextColor="#7B8495" />
 
         <View style={styles.logoBox}>
@@ -42,8 +44,16 @@ export default function LaunchpadScreen() {
         <Text style={styles.previewSub}>Supply: {Number(supply || 0).toLocaleString('en-US')}</Text>
       </View>
 
-      <Pressable style={styles.button}>
-        <Text style={styles.buttonText}>Create Coin Draft</Text>
+      <Pressable
+        style={styles.button}
+        onPress={() =>
+          Alert.alert(
+            'Coin Draft Created',
+            `Name: ${name}\nTicker: ${ticker}\nSupply: ${supply}\n\nNext backend: create coin fee in GBX + launch transaction.`
+          )
+        }
+      >
+        <Text style={styles.buttonText}>{t('launch.create')}</Text>
       </Pressable>
     </ScrollView>
   );

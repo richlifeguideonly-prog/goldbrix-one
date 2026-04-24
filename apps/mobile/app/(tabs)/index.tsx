@@ -1,5 +1,7 @@
 import React from 'react';
 import { ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useI18n } from '../../lib/i18n';
 
 const gold = '#F5C542';
 const bg = '#06101F';
@@ -18,9 +20,9 @@ function LiveAnnouncementBanner() {
         <Text style={styles.bannerBadge}>LIVE UPDATE</Text>
         <Text style={styles.bannerTime}>Public message</Text>
       </View>
-      <Text style={styles.bannerTitle}>GOLDBRIX Announcement</Text>
+      <Text style={styles.bannerTitle}>{t('home.banner.title')}</Text>
       <Text style={styles.bannerText}>
-        Buy GBX with USDC is coming soon. Solana route first, then BNB and Ethereum.
+        {t('home.banner.text')}
       </Text>
     </View>
   );
@@ -40,9 +42,9 @@ function Stat({ label, value, sub }: { label: string; value: string; sub?: strin
   );
 }
 
-function Action({ title, subtitle }: { title: string; subtitle: string }) {
+function Action({ title, subtitle, onPress }: { title: string; subtitle: string; onPress: () => void }) {
   return (
-    <Pressable style={styles.action}>
+    <Pressable style={styles.action} onPress={onPress}>
       <Text style={styles.actionTitle}>{title}</Text>
       <Text style={styles.actionSub}>{subtitle}</Text>
     </Pressable>
@@ -50,18 +52,21 @@ function Action({ title, subtitle }: { title: string; subtitle: string }) {
 }
 
 export default function HomeDashboard() {
+  const router = useRouter();
+  const { t } = useI18n();
+
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <Text style={styles.brand}>GOLDBRIX One</Text>
-      <Text style={styles.subtitle}>Native wallet · mining · launchpad · USDC onboarding</Text>
+      <Text style={styles.subtitle}>{t('home.subtitle')}</Text>
 
       <LiveAnnouncementBanner />
 
       <Card>
         <View style={styles.heroTop}>
           <View>
-            <Text style={styles.cardTitle}>Mainnet Control Center</Text>
-            <Text style={styles.muted}>Product UI v2 active</Text>
+            <Text style={styles.cardTitle}>{t('home.control')}</Text>
+            <Text style={styles.muted}>{t('home.ui')}</Text>
           </View>
           <View style={styles.livePill}>
             <Text style={styles.liveDot}>●</Text>
@@ -77,12 +82,12 @@ export default function HomeDashboard() {
         </View>
       </Card>
 
-      <Text style={styles.section}>Quick Actions</Text>
+      <Text style={styles.section}>{t('home.quick')}</Text>
       <View style={styles.actionGrid}>
-        <Action title="Open Wallet" subtitle="receive, send, history" />
-        <Action title="Buy GBX" subtitle="USDC deposit flow" />
-        <Action title="Create Coin" subtitle="launchpad builder" />
-        <Action title="Mining" subtitle="pool + workers" />
+        <Action title={t('home.wallet')} subtitle={t('home.wallet.sub')} onPress={() => router.push('/wallet' as any)} />
+        <Action title={t('home.buy')} subtitle={t('home.buy.sub')} onPress={() => router.push('/buy' as any)} />
+        <Action title={t('home.launch')} subtitle={t('home.launch.sub')} onPress={() => router.push('/launchpad' as any)} />
+        <Action title={t('home.mining')} subtitle={t('home.mining.sub')} onPress={() => router.push('/explore' as any)} />
       </View>
 
       <Card>
