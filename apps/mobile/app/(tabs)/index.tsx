@@ -201,6 +201,14 @@ export default function HomeScreen() {
   await fetchAddressTxs(address);
 };
 
+  const schedulePostSendRefresh = () => {
+    [5000, 15000, 30000, 60000].forEach((delayMs) => {
+      setTimeout(() => {
+        void refreshAll();
+      }, delayMs);
+    });
+  };
+
   const generateWallet = async () => {
     try {
       const words = generateMnemonic(wordlist);
@@ -395,7 +403,12 @@ Amount: ${amount} GOLDBRIX`,
 
     const feeGoldbrix = (Number(signed.feeSats) / 100000000).toFixed(8);
 
-      const res = await fetch(`${API_BASE}/api/broadcast`, {
+      const broadcastUrl = `${API_BASE}/api/broadcast`;
+      console.log('SEND_FETCH_URL', broadcastUrl);
+      console.log('SEND_RAWTX_LEN', String(signed.rawtx || '').length);
+      console.log('SEND_RAWTX_PREFIX', String(signed.rawtx || '').slice(0, 80));
+
+      const res = await fetch(broadcastUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -405,15 +418,41 @@ Amount: ${amount} GOLDBRIX`,
         }),
       });
 
+      console.log('SEND_HTTP_STATUS', res.status);
+
+      const responseText = await res.text();
+      console.log('SEND_HTTP_BODY', responseText.slice(0, 500));
+
       if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
+        throw new Error(`HTTP ${res.status}: ${responseText.slice(0, 200)}`);
       }
 
-      const data: BroadcastResponse = await res.json();
+      const data: BroadcastResponse = JSON.parse(responseText);
+
+    console.log('SEND_OPTIMISTIC_TX', data.txid);
+    const optimisticTx = {
+      txid: data.txid,
+      vout: null,
+      amount_gbx: `-${amount}`,
+      amount_sats: -Number(signed.spendSats || 0),
+      confirmations: 0,
+      height: null,
+      spendable: false,
+      coinbase: false,
+      desc: `sent to ${dest}`,
+      rawtx_hex: '',
+      pending: true,
+    };
+    setTxs((prev: Array<any>) => [
+      optimisticTx,
+      ...prev.filter((tx: any) => tx?.txid !== data.txid),
+    ]);
+    schedulePostSendRefresh();
+
 
     Alert.alert(
       'Transaction Broadcasted',
-      `Destination: ${dest}\nAmount: ${amount} GOLDBRIX\nFee: ${feeGoldbrix} GOLDBRIX\nTXID: ${data.txid}\n\nBroadcast successful. Balance and tx history update after confirmation.`
+      `Destination: ${dest}\nAmount: ${amount} GOLDBRIX\nFee: ${feeGoldbrix} GOLDBRIX\nTXID: ${data.txid}\n\nBroadcast successful. Pending transaction is shown immediately. Balance and tx history refresh automatically after confirmation.`
     );
 
     setSendMode(false);
@@ -422,6 +461,9 @@ Amount: ${amount} GOLDBRIX`,
       await refreshAll();
     } catch (err: any) {
       console.log('caught error');
+      console.log('SEND_ERR_NAME', err?.name ?? '');
+      console.log('SEND_ERR_MESSAGE', err?.message ?? '');
+      console.log('SEND_ERR_STACK', err?.stack ?? '');
       Alert.alert('Send Error', err?.message || 'Failed to sign and broadcast transaction');
     } finally {
       setSending(false);
