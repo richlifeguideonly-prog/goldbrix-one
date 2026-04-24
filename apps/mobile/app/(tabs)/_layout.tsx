@@ -2,13 +2,9 @@ import { Tabs } from 'expo-router';
 import React from 'react';
 import { Text } from 'react-native';
 
-const gold = '#F5C542';
-const bg = '#06101F';
-const tabBg = '#F7F7F7';
-
 function TabIcon({ label, color }: { label: string; color: string }) {
   return (
-    <Text style={{ color, fontSize: 20, fontWeight: '900' }}>
+    <Text style={{ color, fontSize: 22, fontWeight: '900' }}>
       {label}
     </Text>
   );
@@ -19,18 +15,19 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#0891B2',
-        tabBarInactiveTintColor: '#8B8B8B',
+        tabBarActiveTintColor: '#F5C542',
+        tabBarInactiveTintColor: '#7F8796',
         tabBarStyle: {
-          backgroundColor: tabBg,
-          height: 76,
-          paddingTop: 6,
-          paddingBottom: 10,
-          borderTopWidth: 0,
+          backgroundColor: '#06101F',
+          height: 82,
+          paddingTop: 7,
+          paddingBottom: 12,
+          borderTopWidth: 1,
+          borderTopColor: '#22395D',
         },
         tabBarLabelStyle: {
           fontSize: 11,
-          fontWeight: '700',
+          fontWeight: '900',
         },
       }}
     >
