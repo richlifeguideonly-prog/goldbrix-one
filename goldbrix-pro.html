@@ -1,0 +1,1933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>GOLDBRIX ONE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
+<style>
+:root {
+  --gold:#C9A84C;--gold-bright:#F0C060;--gold-dim:#8B6914;--gold-glow:rgba(201,168,76,0.12);--gold-border:rgba(201,168,76,0.2);
+  --obsidian:#06080F;--obsidian2:#090C16;--obsidian3:#0D1020;--obsidian4:#121626;--obsidian5:#1A2035;
+  --silver:#E8EDF5;--silver-dim:#8B96A8;--silver-muted:#3A4255;
+  --green:#1DB954;--green-dim:rgba(29,185,84,0.15);--red:#E53E3E;--solana:#9945FF;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--obsidian);}
+body{font-family:'Cormorant Garamond',Georgia,serif;color:var(--silver);}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:999;opacity:0.025;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");}
+.ambient{position:fixed;pointer-events:none;z-index:0;}
+.ambient-1{top:-15%;left:50%;transform:translateX(-50%);width:70vw;height:50vh;background:radial-gradient(ellipse,rgba(201,168,76,0.06),transparent 65%);}
+.ambient-2{bottom:-20%;right:-10%;width:50vw;height:40vh;background:radial-gradient(ellipse,rgba(201,168,76,0.04),transparent 60%);}
+#app{position:relative;z-index:1;width:100%;height:100vh;display:flex;flex-direction:column;max-width:430px;margin:0 auto;}
+
+/* ONBOARDING */
+.onboard{position:fixed;inset:0;background:var(--obsidian);z-index:50;display:none;flex-direction:column;align-items:center;justify-content:center;padding:30px;max-width:430px;margin:0 auto;}
+.onboard.show{display:flex;}
+.ob-logo{width:80px;height:80px;border-radius:24px;background:linear-gradient(135deg,var(--gold),var(--gold-bright));display:flex;align-items:center;justify-content:center;margin-bottom:24px;box-shadow:0 12px 40px rgba(201,168,76,0.3);}
+.ob-logo span{font-size:38px;font-weight:700;color:var(--obsidian);}
+.ob-title{font-size:36px;font-weight:600;color:var(--silver);letter-spacing:-0.02em;text-align:center;margin-bottom:8px;}
+.ob-sub{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--silver-dim);letter-spacing:0.1em;text-align:center;margin-bottom:42px;}
+.ob-btns{display:flex;flex-direction:column;gap:12px;width:100%;max-width:320px;}
+.ob-btn{padding:18px;border-radius:14px;border:none;cursor:pointer;font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;letter-spacing:0.05em;transition:all 0.2s;}
+.ob-btn-primary{background:var(--gold);color:var(--obsidian);}
+.ob-btn-primary:hover{background:var(--gold-bright);}
+.ob-btn-secondary{background:transparent;color:var(--silver);border:1px solid var(--obsidian5);}
+.ob-foot{position:absolute;bottom:30px;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--silver-muted);letter-spacing:0.1em;text-align:center;line-height:1.8;}
+.ob-step{display:none;width:100%;max-width:340px;animation:fadeUp 0.3s ease;}
+.ob-step.active{display:flex;flex-direction:column;align-items:center;}
+.ob-back{position:absolute;top:30px;left:30px;background:none;border:none;color:var(--silver-dim);cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.08em;}
+.ob-input{width:100%;background:var(--obsidian3);border:1px solid var(--obsidian5);border-radius:12px;padding:16px 18px;font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--silver);outline:none;margin-bottom:12px;}
+.ob-input:focus{border-color:var(--gold-border);}
+.ob-hint{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--silver-muted);text-align:center;margin-top:14px;line-height:1.7;}
+.seed-display{background:var(--obsidian3);border:1px solid var(--gold-border);border-radius:14px;padding:18px;margin-bottom:14px;width:100%;}
+.seed-grid-onb{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.sw-onb{background:var(--obsidian4);border:1px solid var(--obsidian5);border-radius:8px;padding:8px 10px;}
+.sw-n{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--silver-muted);display:block;margin-bottom:2px;}
+.sw-w{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--silver);font-weight:500;}
+.warning-box{background:rgba(229,62,62,0.08);border:1px solid rgba(229,62,62,0.2);border-radius:12px;padding:12px 14px;margin-bottom:16px;font-family:'JetBrains Mono',monospace;font-size:10px;color:#FC8181;line-height:1.6;}
+
+/* HEADER */
+.header{flex-shrink:0;padding:14px 18px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--gold-border);background:linear-gradient(180deg,rgba(6,8,15,0.95),transparent);}
+.profile-btn{display:flex;align-items:center;gap:10px;background:none;border:none;cursor:pointer;}
+.profile-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-bright));display:flex;align-items:center;justify-content:center;font-size:18px;}
+.profile-info{display:flex;flex-direction:column;align-items:flex-start;gap:2px;}
+.profile-name{font-size:14px;font-weight:600;color:var(--silver);}
+.profile-wallet{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--silver-dim);}
+.header-right{display:flex;align-items:center;gap:8px;}
+.pulse-live{display:flex;align-items:center;gap:5px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--green);}
+.pulse-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s ease-in-out infinite;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(29,185,84,0.5);}50%{box-shadow:0 0 0 5px rgba(29,185,84,0);}}
+.block-tag{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--silver-muted);background:var(--obsidian4);border:1px solid var(--obsidian5);border-radius:4px;padding:3px 7px;}
+.screen{flex:1;overflow-y:auto;overflow-x:hidden;padding-bottom:80px;}
+.screen::-webkit-scrollbar{display:none;}
+.nav{flex-shrink:0;display:flex;align-items:center;padding:8px 4px 16px;border-top:1px solid var(--gold-border);background:var(--obsidian);}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding:6px 0;cursor:pointer;border:none;background:none;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.06em;color:var(--silver-dim);text-transform:uppercase;}
+.nav-item.active{color:var(--gold-bright);}
+.nav-icon{width:22px;height:22px;stroke-width:2;}
+.nav-item.active .nav-icon{transform:scale(1.2);}
+
+/* HOME — DUAL BALANCE */
+.balance-tabs{display:flex;gap:0;margin:18px 18px 0;background:var(--obsidian3);border:1px solid var(--obsidian5);border-radius:14px;padding:4px;}
+.bal-tab{flex:1;padding:10px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.08em;color:var(--silver-dim);cursor:pointer;border-radius:10px;transition:all 0.2s;}
+.bal-tab.active{background:var(--gold-glow);color:var(--gold-bright);}
+.bal-tab.usdc.active{color:var(--solana);background:rgba(153,69,255,0.1);}
+.hero{margin:12px 18px 0;position:relative;overflow:hidden;background:linear-gradient(135deg,var(--obsidian3),var(--obsidian2));border:1px solid var(--gold-border);border-radius:20px;padding:24px 22px 20px;}
+.hero.usdc-mode{border-color:rgba(153,69,255,0.3);}
+.hero::before{content:'';position:absolute;top:0;right:0;width:200px;height:200px;background:radial-gradient(circle at top right,rgba(201,168,76,0.08),transparent 60%);}
+.hero.usdc-mode::before{background:radial-gradient(circle at top right,rgba(153,69,255,0.1),transparent 60%);}
+.hero-label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.15em;color:var(--gold-dim);text-transform:uppercase;margin-bottom:8px;}
+.hero.usdc-mode .hero-label{color:var(--solana);}
+.hero-amount{font-size:38px;font-weight:300;color:var(--gold-bright);letter-spacing:-0.02em;line-height:1;}
+.hero.usdc-mode .hero-amount{color:#B47BFF;}
+.hero-currency{font-size:14px;font-weight:400;color:var(--gold-dim);margin-left:6px;}
+.hero.usdc-mode .hero-currency{color:var(--solana);}
+.hero-addr{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--silver-muted);margin-top:14px;cursor:pointer;word-break:break-all;line-height:1.6;border-top:1px solid var(--obsidian5);padding-top:12px;}
+.hero-chips{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:14px;}
+.chip{background:var(--obsidian4);border:1px solid var(--obsidian5);border-radius:10px;padding:10px 12px;}
+.chip-l{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--silver-muted);text-transform:uppercase;margin-bottom:4px;}
+.chip-v{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500;color:var(--silver);}
+.chip-v.g{color:var(--green);}
+.chip-v.d{color:var(--silver-dim);}
+
+.action-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 18px 0;}
+.action-btn{background:var(--obsidian3);border:1px solid var(--obsidian5);border-radius:14px;padding:16px 14px;cursor:pointer;display:flex;flex-direction:column;gap:8px;}
+.action-btn:hover{border-color:var(--gold-border);background:var(--obsidian4);}
+.action-icon{width:40px;height:40px;border-radius:10px;background:var(--gold-glow);border:1px solid var(--gold-border);display:flex;align-items:center;justify-content:center;}
+.action-icon svg{width:20px;height:20px;color:var(--gold-bright);stroke-width:2;}
+.action-label{font-size:14px;font-weight:600;color:var(--silver);}
+.action-desc{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--silver-muted);}
+
+.section-title{padding:20px 18px 10px;display:flex;align-items:center;gap:10px;}
+.section-title span{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.15em;color:var(--silver-muted);text-transform:uppercase;}
+.section-title::after{content:'';flex:1;height:1px;background:var(--obsidian5);}
+
+.stat-list{margin:0 18px;background:var(--obsidian3);border:1px solid var(--obsidian5);border-radius:14px;overflow:hidden;}
+.stat-row{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--obsidian4);}
+.stat-row:last-child{border-bottom:none;}
+.stat-k{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--silver-dim);}
+.stat-v{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;color:var(--silver);}
+.stat-v.gold{color:var(--gold);}
+.stat-v.green{color:var(--green);}
+.stat-v.solana{color:var(--solana);}
+
+/* WALLET ACTIONS */
+.wallet-actions{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:12px 18px 0;}
+.wa-btn{background:var(--obsidian3);border:1px solid var(--obsidian5);border-radius:12px;padding:13px 4px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:7px;font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:0.04em;color:var(--silver-dim);text-transform:uppercase;}
+.wa-btn:hover{border-color:var(--gold-border);color:var(--gold-bright);}
+.wa-btn svg{width:20px;height:20px;color:var(--gold-bright);stroke-width:2;}
+.wa-btn.usdc-action svg{color:var(--solana);}
+
+/* SWAP */
+.swap-container{margin:18px 18px 0;}
+.swap-box{background:var(--obsidian3);border:1px solid var(--obsidian5);border-radius:14px;padding:14px 16px;position:relative;}
+.swap-box+.swap-box{margin-top:6px;}
+.swap-label{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.1em;color:var(--silver-muted);text-transform:uppercase;margin-bottom:8px;}
+.swap-row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.swap-amt-input{flex:1;background:none;border:none;font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:300;color:var(--silver);outline:none;}
+.swap-token{display:flex;align-items:center;gap:8px;background:var(--obsidian4);border:1px solid var(--obsidian5);border-radius:100px;padding:7px 14px 7px 7px;}
+.swap-token-icon{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;}
+.token-gbx{background:linear-gradient(135deg,var(--gold),var(--gold-bright));color:var(--obsidian);font-weight:700;}
+.token-usdc{background:#2775CA;color:white;font-weight:700;font-size:11px;}
+.swap-token-name{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--silver);}
+.swap-bal{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--silver-muted);margin-top:6px;}
+.swap-bal-max{color:var(--gold);cursor:pointer;}
+.swap-arrow{position:absolute;left:50%;top:100%;transform:translate(-50%,-50%);width:36px;height:36px;background:var(--obsidian4);border:2px solid var(--obsidian);border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;}
+.swap-arrow svg{width:18px;height:18px;color:var(--gold);stroke-width:2.5;}
+.swap-quote{margin-top:14px;background:var(--obsidian3);border:1px solid var(--obsidian5);border-radius:12px;overflow:hidden;}
+.swap-quote .qp-row{display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--obsidian4);}
+.swap-quote .qp-row:last-child{border-bottom:none;background:var(--gold-glow);}
+.swap-quote .qp-k{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--silver-muted);}
+.swap-quote .qp-v{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--silver);}
+.swap-quote .qp-v.h{color:var(--gold-bright);font-weight:700;font-size:12px;}
+
+/* BUY/SELL TABS */
+.swap-tabs{display:flex;gap:6px;margin-bottom:12px;}
+.swap-tab{flex:1;padding:10px;text-align:center;background:var(--obsidian3);border:1px solid var(--obsidian5);border-radius:10px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--silver-dim);cursor:pointer;text-transform:uppercase;}
+.swap-tab.active{background:var(--gold-glow);border-color:var(--gold-border);color:var(--gold);}
+
+.btn-buy{margin:14px 18px 0;width:calc(100% - 36px);padding:18px;background:var(--gold);color:var(--obsidian);border:none;border-radius:14px;font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:700;letter-spacing:0.08em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;}
+.btn-buy:hover{background:var(--gold-bright);}
+.btn-buy.sell{background:var(--red);color:white;}
+.btn-buy.sell:hover{background:#C53030;}
+
+.order-track{margin:14px 18px 0;background:var(--obsidian3);border:1px solid var(--obsidian5);border-radius:14px;padding:16px;display:none;}
+.order-track.show{display:block;}
+.ot-title{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.12em;color:var(--gold);text-transform:uppercase;margin-bottom:12px;}
+.ot-steps{display:flex;align-items:center;gap:0;margin-bottom:14px;}
+.ot-step{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;}
+.ot-circle{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--obsidian5);background:var(--obsidian4);display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--silver-muted);}
+.ot-circle.done{background:var(--gold);border-color:var(--gold);color:var(--obsidian);}
+.ot-circle.active{border-color:var(--gold);color:var(--gold);}
+.ot-label{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--silver-muted);}
+.ot-line{flex:1;height:1px;background:var(--obsidian5);margin-top:-16px;}
+.ot-line.done{background:var(--gold-dim);}
+.ot-addr{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--silver-dim);word-break:break-all;line-height:1.6;background:var(--obsidian4);border-radius:8px;padding:10px 12px;border:1px solid var(--obsidian5);}
+.ot-hint{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--silver-muted);margin-top:8px;text-align:center;}
+
+/* MINING */
+.mining-card{margin:18px 18px 0;background:var(--obsidian2);border:1px solid var(--obsidian5);border-radius:18px;padding:20px;}
+.mc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.mc-status{display:flex;align-items:center;gap:8px;}
+.mc-dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 1.5s ease-in-out infinite;}
+.mc-dot.off{background:var(--silver-muted);animation:none;}
+.mc-label{font-size:16px;font-weight:600;color:var(--silver);}
+.mc-hash{font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:500;color:var(--gold);}
+.mc-hash-label{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--silver-muted);}
+.mining-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 18px 0;}
+.m-btn{padding:15px;border-radius:12px;border:none;cursor:pointer;font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;}
+.m-btn-start{background:var(--gold);color:var(--obsidian);}
+.m-btn-stop{background:transparent;color:var(--silver-dim);border:1px solid var(--obsidian5);}
+
+/* LAUNCHPAD */
+.launch-form{margin:16px 18px 0;}
+.lf-field{margin-bottom:14px;}
+.lf-label{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.12em;color:var(--silver-muted);text-transform:uppercase;margin-bottom:6px;}
+.lf-input{width:100%;background:var(--obsidian3);border:1px solid var(--obsidian5);border-radius:12px;padding:14px 16px;font-family:'Cormorant Garamond',serif;font-size:17px;color:var(--silver);outline:none;}
+.lf-input:focus{border-color:var(--gold-border);}
+.lf-textarea{width:100%;background:var(--obsidian3);border:1px solid var(--obsidian5);border-radius:12px;padding:14px 16px;font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--silver);outline:none;resize:none;min-height:80px;}
+.lf-fee{background:var(--gold-glow);border:1px solid var(--gold-border);border-radius:10px;padding:12px 14px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--gold-dim);display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+.lf-fee strong{color:var(--gold);}
+.logo-upload{display:flex;gap:14px;align-items:center;background:var(--obsidian3);border:1px dashed var(--gold-border);border-radius:14px;padding:14px;cursor:pointer;}
+.logo-upload:hover{border-color:var(--gold);background:var(--obsidian4);}
+.logo-preview{width:72px;height:72px;border-radius:14px;background:var(--obsidian4);border:1px solid var(--obsidian5);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;}
+.logo-preview img{width:100%;height:100%;object-fit:cover;}
+.logo-preview svg{width:28px;height:28px;color:var(--gold);stroke-width:1.5;}
+.lu-title{font-size:14px;font-weight:600;color:var(--silver);margin-bottom:3px;}
+.lu-sub{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--silver-muted);}
+.logo-input{display:none;}
+.coin-preview{margin-top:8px;background:linear-gradient(135deg,var(--obsidian2),var(--obsidian3));border:1px solid var(--gold-border);border-radius:14px;padding:16px;display:flex;align-items:center;gap:14px;}
+.cp-logo{width:54px;height:54px;border-radius:50%;background:var(--obsidian4);border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;}
+.cp-logo img{width:100%;height:100%;object-fit:cover;}
+.cp-logo span{font-size:24px;font-weight:700;color:var(--gold);}
+.cp-name{font-size:17px;font-weight:600;color:var(--silver);}
+.cp-ticker{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--gold-bright);letter-spacing:0.1em;margin-top:2px;}
+.cp-supply{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--silver-muted);margin-top:4px;}
+.socials-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.social-input{position:relative;}
+.social-input svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--silver-muted);}
+.social-input input{padding-left:38px;font-size:13px;}
+
+/* DEV BUY SLIDER */
+.dev-buy-box{background:var(--obsidian3);border:1px solid var(--gold-border);border-radius:12px;padding:14px;margin-bottom:14px;}
+.dev-buy-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.dev-buy-label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--gold);letter-spacing:0.08em;text-transform:uppercase;}
+.dev-buy-value{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--gold-bright);font-weight:600;}
+.dev-buy-slider{width:100%;-webkit-appearance:none;appearance:none;height:4px;background:var(--obsidian5);border-radius:2px;outline:none;}
+.dev-buy-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:18px;height:18px;border-radius:50%;background:var(--gold);cursor:pointer;border:2px solid var(--obsidian);}
+.dev-buy-slider::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--gold);cursor:pointer;border:2px solid var(--obsidian);}
+.dev-buy-info{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--silver-muted);margin-top:8px;line-height:1.6;}
+
+/* COIN MARKET LIST */
+.coin-list{margin:0 18px;display:flex;flex-direction:column;gap:8px;}
+.coin-card{background:var(--obsidian3);border:1px solid var(--obsidian5);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all 0.2s;}
+.coin-card:hover{border-color:var(--gold-border);}
+.coin-card-logo{width:42px;height:42px;border-radius:50%;background:var(--obsidian4);border:1px solid var(--gold-border);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;overflow:hidden;}
+.coin-card-logo img{width:100%;height:100%;object-fit:cover;}
+.coin-card-info{flex:1;min-width:0;}
+.coin-card-name{font-size:14px;font-weight:600;color:var(--silver);}
+.coin-card-meta{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--silver-muted);margin-top:2px;}
+.coin-card-stats{text-align:right;flex-shrink:0;}
+.coin-card-mc{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gold);font-weight:600;}
+.coin-card-change{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--green);margin-top:2px;}
+.coin-card-change.down{color:var(--red);}
+.coin-progress{margin-top:8px;height:4px;background:var(--obsidian5);border-radius:2px;overflow:hidden;}
+.coin-progress-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-bright));}
+
+/* SETTINGS */
+.settings-section{margin:0 18px 14px;background:var(--obsidian3);border:1px solid var(--obsidian5);border-radius:14px;overflow:hidden;}
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--obsidian4);cursor:pointer;}
+.settings-row:last-child{border-bottom:none;}
+.settings-row:hover{background:var(--obsidian4);}
+.sr-title{font-size:14px;font-weight:500;color:var(--silver);}
+.sr-sub{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--silver-muted);}
+.sr-right{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--gold);}
+.lang-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 18px 14px;}
+.lang-btn{background:var(--obsidian3);border:1px solid var(--obsidian5);border-radius:10px;padding:11px 8px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--silver-muted);cursor:pointer;text-align:center;}
+.lang-btn.active{border-color:var(--gold-border);color:var(--gold);background:var(--gold-glow);}
+
+/* MODALS */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:100;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.25s;backdrop-filter:blur(4px);}
+.modal-overlay.show{opacity:1;pointer-events:all;}
+.modal{background:var(--obsidian3);border:1px solid var(--gold-border);border-top-left-radius:24px;border-top-right-radius:24px;padding:28px 22px 44px;width:100%;max-width:430px;transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.34,1.2,0.64,1);max-height:88vh;overflow-y:auto;}
+.modal::-webkit-scrollbar{display:none;}
+.modal-overlay.show .modal{transform:translateY(0);}
+.modal-handle{width:36px;height:3px;background:var(--obsidian5);border-radius:3px;margin:0 auto 22px;}
+.modal-title{font-size:22px;font-weight:600;color:var(--silver);margin-bottom:4px;}
+.modal-sub{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--silver-muted);letter-spacing:0.05em;margin-bottom:20px;}
+
+.wallet-list{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;}
+.wallet-item{background:var(--obsidian4);border:1px solid var(--obsidian5);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:12px;cursor:pointer;}
+.wallet-item:hover{border-color:var(--gold-border);}
+.wallet-item.active{border-color:var(--gold);background:var(--gold-glow);}
+.wi-emoji{width:42px;height:42px;border-radius:12px;background:var(--obsidian);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;position:relative;}
+.wi-emoji::after{content:'✓';position:absolute;bottom:-4px;right:-4px;width:18px;height:18px;border-radius:50%;background:var(--gold);border:2px solid var(--obsidian3);display:none;font-size:11px;color:var(--obsidian);font-weight:700;line-height:14px;text-align:center;font-family:'JetBrains Mono',monospace;}
+.wallet-item.active .wi-emoji::after{display:block;}
+.wi-info{flex:1;min-width:0;}
+.wi-name{font-size:15px;font-weight:600;color:var(--silver);}
+.wi-bal{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--silver-dim);margin-top:2px;}
+.wi-actions{display:flex;gap:6px;}
+.wi-action-btn{width:32px;height:32px;border-radius:8px;background:var(--obsidian3);border:1px solid var(--obsidian5);display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.wi-action-btn svg{width:13px;height:13px;color:var(--silver-dim);}
+.add-wallet-btn{width:100%;background:var(--gold-glow);border:1px dashed var(--gold-border);border-radius:12px;padding:14px;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:600;color:var(--gold);}
+.add-wallet-btn svg{width:16px;height:16px;}
+
+.qr-wrap{display:flex;justify-content:center;margin:14px 0 18px;}
+.qr-box{width:200px;height:200px;background:white;border-radius:14px;padding:14px;display:flex;align-items:center;justify-content:center;}
+.qr-box img,.qr-box canvas{width:100%!important;height:100%!important;}
+.qr-scanner-wrap{position:relative;width:100%;aspect-ratio:1;background:black;border-radius:14px;overflow:hidden;margin-bottom:14px;}
+.qr-scanner-wrap video{width:100%;height:100%;object-fit:cover;}
+.qr-scanner-frame{position:absolute;inset:20%;border:2px solid var(--gold);border-radius:14px;box-shadow:0 0 0 9999px rgba(0,0,0,0.5);}
+.qr-scan-btn{width:42px;height:42px;border-radius:10px;background:var(--gold-glow);border:1px solid var(--gold-border);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
+.qr-scan-btn svg{width:20px;height:20px;color:var(--gold);}
+.send-addr-row{display:flex;gap:8px;align-items:flex-end;}
+.send-addr-row .lf-input{flex:1;}
+
+/* TOKEN PICKER */
+.token-picker-list{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+.token-picker-item{background:var(--obsidian4);border:1px solid var(--obsidian5);border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;}
+.token-picker-item:hover{border-color:var(--gold-border);}
+.token-picker-item.active{border-color:var(--gold);}
+.tpi-name{font-size:14px;font-weight:600;color:var(--silver);}
+.tpi-bal{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--silver-dim);margin-top:2px;}
+
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(12px);background:var(--obsidian4);border:1px solid var(--gold-border);border-radius:100px;padding:10px 20px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gold);opacity:0;transition:all 0.25s;z-index:200;white-space:nowrap;pointer-events:none;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+.empty{display:flex;flex-direction:column;align-items:center;gap:10px;padding:40px 20px;}
+.empty svg{width:32px;height:32px;color:var(--silver-muted);opacity:0.4;}
+.empty p{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--silver-muted);text-align:center;line-height:1.8;}
+.warn-text{font-family:'JetBrains Mono',monospace;font-size:10px;color:#FC8181;line-height:1.6;background:rgba(229,62,62,0.08);border:1px solid rgba(229,62,62,0.2);border-radius:10px;padding:12px;margin-bottom:16px;}
+.emoji-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin:14px 0;}
+.emoji-btn{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:22px;background:var(--obsidian4);border:1px solid var(--obsidian5);border-radius:10px;cursor:pointer;}
+.emoji-btn.active{border-color:var(--gold);background:var(--gold-glow);}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.screen > *{animation:fadeUp 0.3s ease both;}
+
+[dir="rtl"] .ob-back{left:auto;right:30px;}
+[dir="rtl"] .swap-arrow{left:auto;right:50%;transform:translate(50%,-50%);}
+</style>
+</head>
+<body>
+
+<div class="ambient ambient-1"></div>
+<div class="ambient ambient-2"></div>
+
+<!-- ONBOARDING -->
+<div class="onboard show" id="onboard">
+  <button class="ob-back" id="obBack" style="display:none;" onclick="obStep('welcome')" data-t="back">← Back</button>
+
+  <div class="ob-step active" id="step-welcome">
+    <div class="ob-logo"><span>G</span></div>
+    <h1 class="ob-title">GOLDBRIX</h1>
+    <p class="ob-sub" data-t="powNative">PROOF OF WORK · NATIVE WALLET</p>
+    <div class="ob-btns">
+      <button class="ob-btn ob-btn-primary" onclick="obStep('create')" data-t="createWallet">Create New Wallet</button>
+      <button class="ob-btn ob-btn-secondary" onclick="obStep('import')" data-t="importWallet">Import Existing Wallet</button>
+    </div>
+  </div>
+
+  <div class="ob-step" id="step-create">
+    <div class="ob-logo" style="margin-bottom:16px;"><span>G</span></div>
+    <h2 class="ob-title" style="font-size:26px;" data-t="setPassword">Set Password</h2>
+    <p class="ob-sub" style="margin-bottom:28px;" data-t="unlockWallet">UNLOCK YOUR WALLET ON THIS DEVICE</p>
+    <input class="ob-input" type="password" id="pwd1" data-tp="passwordPh" placeholder="Password (8+ chars)">
+    <input class="ob-input" type="password" id="pwd2" data-tp="confirmPasswordPh" placeholder="Confirm password">
+    <button class="ob-btn ob-btn-primary" style="width:100%;margin-top:8px;" onclick="createWalletFlow()" data-t="generateSeed">Generate Seed Phrase</button>
+    <div class="ob-hint" data-t="seedHint">Stored locally · Never sent to server</div>
+  </div>
+
+  <div class="ob-step" id="step-seed">
+    <h2 class="ob-title" style="font-size:24px;margin-bottom:6px;" data-t="seedTitle">Your Seed Phrase</h2>
+    <p class="ob-sub" style="margin-bottom:18px;" data-t="seedSub">WRITE DOWN ALL 12 WORDS IN ORDER</p>
+    <div class="warning-box" data-t="seedWarn">⚠ Anyone with this seed can steal your funds.</div>
+    <div class="seed-display"><div class="seed-grid-onb" id="seedRevealGrid"></div></div>
+    <button class="ob-btn ob-btn-primary" style="width:100%;" onclick="obStep('confirm')" data-t="seedSaved">I Saved It Securely</button>
+  </div>
+
+  <div class="ob-step" id="step-import">
+    <h2 class="ob-title" style="font-size:24px;margin-bottom:6px;" data-t="importTitle">Import Wallet</h2>
+    <p class="ob-sub" style="margin-bottom:24px;" data-t="importSub">ENTER YOUR 12-WORD SEED</p>
+    <textarea class="ob-input" id="importSeed" placeholder="word1 word2 word3 ... word12" style="min-height:90px;resize:none;font-family:'JetBrains Mono',monospace;font-size:13px;"></textarea>
+    <input class="ob-input" type="password" id="importPwd" data-tp="passwordPh" placeholder="Set password">
+    <button class="ob-btn ob-btn-primary" style="width:100%;margin-top:6px;" onclick="importWallet()" data-t="importBtn">Import Wallet</button>
+  </div>
+
+  <div class="ob-step" id="step-confirm">
+    <div class="ob-logo" style="background:var(--green);"><span style="color:white;">✓</span></div>
+    <h2 class="ob-title" data-t="walletReady">Wallet Ready</h2>
+    <p class="ob-sub" data-t="walletReadySub">YOUR ACCOUNT IS ENCRYPTED ON THIS DEVICE</p>
+    <div class="ob-btns" style="margin-top:24px;">
+      <button class="ob-btn ob-btn-primary" onclick="finishOnboarding()" data-t="enterApp">Enter GOLDBRIX</button>
+    </div>
+  </div>
+
+  <div class="ob-foot" data-t="selfCustody">SELF-CUSTODY · YOUR KEYS · YOUR COINS</div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app" style="display:none;">
+  <header class="header">
+    <button class="profile-btn" onclick="openModal('mWallets')">
+      <div class="profile-avatar" id="profAvatar">🚀</div>
+      <div class="profile-info">
+        <div class="profile-name" id="profName">Main Wallet</div>
+        <div class="profile-wallet" id="profAddr">—</div>
+      </div>
+    </button>
+    <div class="header-right">
+      <div class="pulse-live"><div class="pulse-dot"></div>LIVE</div>
+      <div class="block-tag" id="blockTag">#19797</div>
+    </div>
+  </header>
+
+  <!-- HOME -->
+  <div class="screen" id="sHome">
+    <div class="balance-tabs">
+      <div class="bal-tab active" id="balTabGbx" onclick="setBalanceTab('gbx')" data-t="gbxBal">GBX BALANCE</div>
+      <div class="bal-tab usdc" id="balTabUsdc" onclick="setBalanceTab('usdc')" data-t="usdcBal">USDC BALANCE</div>
+    </div>
+
+    <div class="hero" id="hero">
+      <div class="hero-label" id="heroLabel"><span data-t="totalBalance">Total Balance</span> · <span id="heroWalletName">Main</span></div>
+      <div class="hero-amount" id="heroAmt">130,949<span class="hero-currency" id="heroCurrency">GBX</span></div>
+      <div class="hero-addr" id="heroAddr" onclick="copyAddr()">—</div>
+      <div class="hero-chips" id="heroChips">
+        <div class="chip"><div class="chip-l" data-t="spendable">Spendable</div><div class="chip-v g" id="heroSpend">125,999</div></div>
+        <div class="chip"><div class="chip-l" data-t="immature">Immature</div><div class="chip-v d" id="heroImm">4,950</div></div>
+        <div class="chip"><div class="chip-l" data-t="txCount">TX Count</div><div class="chip-v" id="heroTx">2,619</div></div>
+      </div>
+    </div>
+
+    <div class="action-grid">
+      <div class="action-btn" onclick="nav('wallet')">
+        <div class="action-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M16 12h2"/></svg></div>
+        <div><div class="action-label" data-t="walletAction">Wallet</div><div class="action-desc" data-t="sendReceive">Send · Receive</div></div>
+      </div>
+      <div class="action-btn" onclick="nav('swap')">
+        <div class="action-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 16V4M7 4L3 8M7 4l4 4M17 8v12M17 20l-4-4M17 20l4-4"/></svg></div>
+        <div><div class="action-label" data-t="swapAction">Swap</div><div class="action-desc" data-t="swapDesc">USDC ⇄ GBX</div></div>
+      </div>
+      <div class="action-btn" onclick="nav('launch')">
+        <div class="action-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+        <div><div class="action-label" data-t="launchpadAction">Launchpad</div><div class="action-desc" data-t="createCoins">Create Coins</div></div>
+      </div>
+      <div class="action-btn" onclick="nav('mining')">
+        <div class="action-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 0110 10H12V2z"/><path d="M12 12l-7 7"/><circle cx="12" cy="12" r="2"/></svg></div>
+        <div><div class="action-label" data-t="miningAction">Mining</div><div class="action-desc" data-t="poolRewards">Pool · Rewards</div></div>
+      </div>
+    </div>
+
+    <div class="section-title"><span data-t="network">Network</span></div>
+    <div class="stat-list">
+      <div class="stat-row"><span class="stat-k" data-t="chain">Chain</span><span class="stat-v gold">goldbrix-mainnet</span></div>
+      <div class="stat-row"><span class="stat-k" data-t="bestBlock">Best Block</span><span class="stat-v" id="homeBlock">19,797</span></div>
+      <div class="stat-row"><span class="stat-k" data-t="miners">Miners</span><span class="stat-v green"><span data-t="miner1Active">1 Active</span></span></div>
+      <div class="stat-row"><span class="stat-k" data-t="custody">Custody</span><span class="stat-v green" data-t="selfCustodyShort">Self-Custody</span></div>
+    </div>
+
+    <div class="section-title"><span data-t="myCoins">My Created Coins</span></div>
+    <div id="myCoinsList"></div>
+  </div>
+
+  <!-- WALLET -->
+  <div class="screen" id="sWallet" style="display:none;">
+    <div class="section-title" style="padding-top:20px;"><span data-t="walletAction">Wallet</span></div>
+    <div class="hero" style="margin:0 18px;" id="walletHero">
+      <div class="hero-label" id="walletHeroLabel"><span data-t="gbxBalanceLbl">GBX Balance</span> · <span id="walName2">Main</span></div>
+      <div class="hero-amount" id="walAmt">125,999<span class="hero-currency" id="walCurrency">GBX</span></div>
+      <div class="hero-addr" id="walAddr2" onclick="copyAddr()">—</div>
+    </div>
+    <div class="wallet-actions">
+      <div class="wa-btn" onclick="openModal('mReceive')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v10m0 0l-3-3m3 3l3-3"/><path d="M3 17h18v2a2 2 0 01-2 2H5a2 2 0 01-2-2v-2z"/></svg>
+        <span data-t="receive">Receive</span>
+      </div>
+      <div class="wa-btn" onclick="openModal('mSend')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+        <span data-t="send">Send</span>
+      </div>
+      <div class="wa-btn" onclick="nav('swap')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 16V4M7 4L3 8M7 4l4 4M17 8v12M17 20l-4-4M17 20l4-4"/></svg>
+        <span data-t="swap">Swap</span>
+      </div>
+      <div class="wa-btn" onclick="openModal('mWallets')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h18M3 12h18M3 17h18"/></svg>
+        <span data-t="switch">Switch</span>
+      </div>
+    </div>
+
+    <div class="section-title"><span data-t="tokens">Tokens</span></div>
+    <div class="token-picker-list" style="margin:0 18px;">
+      <div class="token-picker-item" onclick="setActiveToken('GBX')">
+        <div class="swap-token-icon token-gbx">G</div>
+        <div style="flex:1;"><div class="tpi-name">GOLDBRIX</div><div class="tpi-bal" id="tokGbxBal">— GBX</div></div>
+        <div class="stat-v gold" id="tokGbxValue">— USD</div>
+      </div>
+      <div class="token-picker-item" onclick="setActiveToken('USDC')">
+        <div class="swap-token-icon token-usdc">$</div>
+        <div style="flex:1;"><div class="tpi-name">USD Coin</div><div class="tpi-bal" id="tokUsdcBal">— USDC</div></div>
+        <div class="stat-v solana" id="tokUsdcValue">— USD</div>
+      </div>
+    </div>
+
+    <div class="section-title"><span data-t="history">History</span></div>
+    <div class="empty">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 14l-4-4 4-4M15 10h6"/></svg>
+      <p data-t="noTx">No transactions yet.<br>Mine or receive GBX to begin.</p>
+    </div>
+  </div>
+
+  <!-- SWAP -->
+  <div class="screen" id="sSwap" style="display:none;">
+    <div class="section-title" style="padding-top:20px;"><span data-t="swapTitle">Swap</span></div>
+    <div class="swap-container">
+      <div class="swap-tabs">
+        <div class="swap-tab active" id="swapTabBuy" onclick="setSwapMode('buy')" data-t="buyGbx">Buy GBX</div>
+        <div class="swap-tab" id="swapTabSell" onclick="setSwapMode('sell')" data-t="sellGbx">Sell GBX</div>
+      </div>
+
+      <div class="swap-box">
+        <div class="swap-label" data-t="youPay">You Pay</div>
+        <div class="swap-row">
+          <input class="swap-amt-input" type="number" id="swapInAmt" value="10" oninput="calcSwap()">
+          <div class="swap-token">
+            <div class="swap-token-icon token-usdc" id="swapInIcon">$</div>
+            <div class="swap-token-name" id="swapInName">USDC</div>
+          </div>
+        </div>
+        <div class="swap-bal"><span data-t="balance">Balance</span>: <span id="swapInBal">0.00</span> · <span class="swap-bal-max" onclick="setSwapMax()" data-t="max">MAX</span></div>
+        <div class="swap-arrow" onclick="flipSwap()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M7 16V4M7 4L3 8M7 4l4 4M17 8v12M17 20l-4-4M17 20l4-4"/></svg>
+        </div>
+      </div>
+
+      <div class="swap-box">
+        <div class="swap-label" data-t="youReceive">You Receive</div>
+        <div class="swap-row">
+          <input class="swap-amt-input" type="number" id="swapOutAmt" value="1000" readonly>
+          <div class="swap-token">
+            <div class="swap-token-icon token-gbx" id="swapOutIcon">G</div>
+            <div class="swap-token-name" id="swapOutName">GBX</div>
+          </div>
+        </div>
+        <div class="swap-bal"><span data-t="balance">Balance</span>: <span id="swapOutBal">0.00</span></div>
+      </div>
+
+      <div class="swap-quote">
+        <div class="qp-row"><span class="qp-k" data-t="rate">Rate</span><span class="qp-v" id="swapRate">1 USDC = 100 GBX</span></div>
+        <div class="qp-row"><span class="qp-k" data-t="platformFee">Platform Fee 1%</span><span class="qp-v" id="swapFee">0.10 USDC</span></div>
+        <div class="qp-row"><span class="qp-k" data-t="spread">Spread 1%</span><span class="qp-v" id="swapSpread">0.10 USDC</span></div>
+        <div class="qp-row"><span class="qp-k" data-t="totalLbl">Total</span><span class="qp-v h" id="swapTotal">10.20 USDC</span></div>
+      </div>
+    </div>
+
+    <button class="btn-buy" id="swapBtn" onclick="executeSwap()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      <span data-t="executeSwap">Execute Swap</span>
+    </button>
+
+    <div class="order-track" id="orderTrack">
+      <div class="ot-title" data-t="orderStatus">Order Status</div>
+      <div class="ot-steps">
+        <div class="ot-step"><div class="ot-circle done" id="os1">✓</div><div class="ot-label" data-t="created">Created</div></div>
+        <div class="ot-line done"></div>
+        <div class="ot-step"><div class="ot-circle active" id="os2">2</div><div class="ot-label" data-t="payment">Payment</div></div>
+        <div class="ot-line" id="ol2"></div>
+        <div class="ot-step"><div class="ot-circle" id="os3">3</div><div class="ot-label" data-t="payout">Payout</div></div>
+        <div class="ot-line" id="ol3"></div>
+        <div class="ot-step"><div class="ot-circle" id="os4">4</div><div class="ot-label" data-t="filled">Filled</div></div>
+      </div>
+      <div class="ot-addr" id="otAddr">—</div>
+      <div class="ot-hint" id="otHint" data-t="sendExact">Send exact USDC to address above</div>
+    </div>
+  </div>
+
+  <!-- LAUNCHPAD -->
+  <div class="screen" id="sLaunch" style="display:none;">
+    <div style="margin:18px 18px 0;">
+      <div style="font-size:28px;font-weight:300;color:var(--silver);" data-t="launchpadAction">Launchpad</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--silver-muted);margin-top:4px;" data-t="launchpadSub">Deploy memecoins on GOLDBRIX · Bonding curve</div>
+    </div>
+
+    <div class="launch-form">
+      <div class="lf-field">
+        <div class="lf-label" data-t="coinLogo">Coin Logo / Image</div>
+        <label class="logo-upload" for="logoFile">
+          <div class="logo-preview" id="logoPreview">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>
+          </div>
+          <div>
+            <div class="lu-title" data-t="uploadImage">Upload Image</div>
+            <div class="lu-sub" data-t="uploadImageHint">PNG · JPG · max 2MB · 512×512</div>
+          </div>
+        </label>
+        <input class="logo-input" type="file" id="logoFile" accept="image/*" onchange="previewLogo(event)">
+      </div>
+
+      <div class="lf-field"><div class="lf-label" data-t="coinName">Coin Name</div><input class="lf-input" type="text" data-tp="coinNamePh" placeholder="e.g. Gold Meme" id="lName" oninput="updatePreview()"></div>
+      <div class="lf-field"><div class="lf-label" data-t="ticker">Ticker Symbol</div><input class="lf-input" type="text" data-tp="tickerPh" placeholder="e.g. GMEME" id="lTicker" style="text-transform:uppercase;" oninput="updatePreview()"></div>
+      <div class="lf-field"><div class="lf-label" data-t="totalSupply">Total Supply</div><input class="lf-input" type="number" id="lSupply" value="1000000000" oninput="updatePreview()"></div>
+      <div class="lf-field"><div class="lf-label" data-t="description">Description (optional)</div><textarea class="lf-textarea" data-tp="descPh" placeholder="Tell the community about your coin..." id="lDesc"></textarea></div>
+      <div class="lf-field">
+        <div class="lf-label" data-t="socials">Social Links (optional)</div>
+        <div class="socials-grid">
+          <div class="social-input">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 4.01c-1 .49-1.98.689-3 .99-1.121-1.265-2.783-1.335-4.38-.737S11.977 6.323 12 8v1c-3.245.083-6.135-1.395-8-4 0 0-4.182 7.433 4 11-1.872 1.247-3.739 2.088-6 2 3.308 1.803 6.913 2.423 10.034 1.517 3.58-1.04 6.522-3.723 7.651-7.742a13.84 13.84 0 00.497-3.753c0-.249 1.51-2.772 1.818-4.013z"/></svg>
+            <input class="lf-input" type="text" placeholder="@twitter" id="lTwitter">
+          </div>
+          <div class="social-input">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 4.5L2.5 12.5l6 2.5 9-7-7 9 2.5 6L21.5 4.5z"/></svg>
+            <input class="lf-input" type="text" placeholder="t.me/group" id="lTele">
+          </div>
+        </div>
+      </div>
+
+      <!-- DEV BUY SLIDER (pump.fun style) -->
+      <div class="dev-buy-box">
+        <div class="dev-buy-row">
+          <div class="dev-buy-label" data-t="devBuy">Dev Buy (Pre-Buy at Launch)</div>
+          <div class="dev-buy-value" id="devBuyValue">0 GBX</div>
+        </div>
+        <input class="dev-buy-slider" type="range" id="devBuySlider" min="0" max="2000" step="50" value="0" oninput="updateDevBuy()">
+        <div class="dev-buy-info" id="devBuyInfo" data-t="devBuyInfo">Buy your own coin first · Recommended for serious launches</div>
+      </div>
+
+      <div class="lf-label" data-t="preview">Preview</div>
+      <div class="coin-preview">
+        <div class="cp-logo" id="cpLogo"><span>?</span></div>
+        <div>
+          <div class="cp-name" id="cpName" data-t="coinNameDef">Coin Name</div>
+          <div class="cp-ticker" id="cpTicker">$TICKER</div>
+          <div class="cp-supply" id="cpSupply">1,000,000,000 supply</div>
+        </div>
+      </div>
+
+      <div class="lf-fee" style="margin:14px 0;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:14px;height:14px;flex-shrink:0;color:var(--gold);"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+        <span data-t="launchFee">Launch fee:</span> <strong id="totalFee">100 GBX</strong> · <span data-t="curveSeed">+ bonding curve seed</span>
+      </div>
+      <button class="btn-buy" onclick="launchCoin()" style="margin:0;width:100%;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5"/></svg>
+        <span data-t="deployCoin">Deploy Coin</span>
+      </button>
+    </div>
+
+    <div class="section-title"><span data-t="recentLaunches">Recent Launches</span></div>
+    <div class="coin-list" id="coinMarketList"></div>
+  </div>
+
+  <!-- MINING -->
+  <div class="screen" id="sMining" style="display:none;">
+    <div class="section-title" style="padding-top:20px;"><span data-t="miningAction">Mining</span></div>
+    <div class="mining-card">
+      <div class="mc-top">
+        <div class="mc-status">
+          <div class="mc-dot" id="mDot"></div>
+          <div class="mc-label" id="mLabel" data-t="active">Active</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="mc-hash" id="mHash">--</div>
+          <div class="mc-hash-label">H/s</div>
+        </div>
+      </div>
+      <div class="stat-row" style="border-top:1px solid var(--obsidian5);padding-top:13px;"><span class="stat-k" data-t="block">Block</span><span class="stat-v gold" id="mBlock">19,797</span></div>
+      <div class="stat-row"><span class="stat-k" data-t="worker">Worker</span><span class="stat-v">gbx-mod3oglx</span></div>
+      <div class="stat-row" style="border-bottom:none;"><span class="stat-k" data-t="payoutAddr">Payout</span><span class="stat-v" style="font-size:9px;" id="mPayout">—</span></div>
+    </div>
+    <div class="mining-btns">
+      <button class="m-btn m-btn-start" onclick="startMine()" data-t="start">Start</button>
+      <button class="m-btn m-btn-stop" onclick="stopMine()" data-t="stop">Stop</button>
+    </div>
+    <div class="section-title"><span data-t="rewards">Rewards</span></div>
+    <div class="stat-list">
+      <div class="stat-row"><span class="stat-k" data-t="totalLbl">Total</span><span class="stat-v gold">130,949.9997 GBX</span></div>
+      <div class="stat-row"><span class="stat-k" data-t="spendable">Spendable</span><span class="stat-v green">125,999.9997 GBX</span></div>
+      <div class="stat-row"><span class="stat-k" data-t="immature">Immature</span><span class="stat-v">4,950.0000 GBX</span></div>
+      <div class="stat-row" style="border-bottom:none;"><span class="stat-k" data-t="rewardTx">Reward TX</span><span class="stat-v">2,619</span></div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="screen" id="sSettings" style="display:none;">
+    <div class="section-title" style="padding-top:20px;"><span data-t="walletsTitle">Wallets</span></div>
+    <div class="settings-section">
+      <div class="settings-row" onclick="openModal('mWallets')">
+        <div><div class="sr-title" data-t="manageWallets">Manage Wallets</div><div class="sr-sub" data-t="manageWalletsSub">Switch · Add · Rename</div></div>
+        <div class="sr-right">→</div>
+      </div>
+      <div class="settings-row" onclick="openModal('mSeed')">
+        <div><div class="sr-title" data-t="viewSeed">View Seed Phrase</div><div class="sr-sub" data-t="viewSeedSub">12-word recovery</div></div>
+        <div class="sr-right">→</div>
+      </div>
+    </div>
+
+    <div class="section-title"><span data-t="language">Language</span></div>
+    <div class="lang-grid">
+      <div class="lang-btn active" onclick="setLang(this,'en')">English</div>
+      <div class="lang-btn" onclick="setLang(this,'de')">Deutsch</div>
+      <div class="lang-btn" onclick="setLang(this,'ro')">Română</div>
+      <div class="lang-btn" onclick="setLang(this,'ar')">العربية</div>
+      <div class="lang-btn" onclick="setLang(this,'zh')">中文</div>
+    </div>
+
+    <div class="section-title"><span data-t="network">Network</span></div>
+    <div class="settings-section">
+      <div class="settings-row"><div><div class="sr-title" data-t="chain">Chain</div></div><div class="sr-right">goldbrix-mainnet</div></div>
+      <div class="settings-row"><div><div class="sr-title" data-t="seedNode">Seed Node 1</div></div><div class="sr-right" style="font-size:9px;">89.167.125.117</div></div>
+      <div class="settings-row" style="border-bottom:none;"><div><div class="sr-title" data-t="seedNode2">Seed Node 2</div></div><div class="sr-right" style="font-size:9px;">89.167.36.203</div></div>
+    </div>
+
+    <div class="section-title"><span data-t="aboutTitle">About</span></div>
+    <div class="settings-section">
+      <div class="settings-row"><div><div class="sr-title" data-t="version">Version</div></div><div class="sr-right">v2.0.0</div></div>
+      <div class="settings-row"><div><div class="sr-title" data-t="core">Core</div></div><div class="sr-right">v30.0.0</div></div>
+      <div class="settings-row" style="border-bottom:none;" onclick="lockApp()"><div><div class="sr-title" style="color:#FC8181;" data-t="lockWallet">Lock Wallet</div><div class="sr-sub" data-t="lockWalletSub">Sign out · re-enter password</div></div><div class="sr-right" style="color:#FC8181;">→</div></div>
+    </div>
+  </div>
+
+  <nav class="nav">
+    <button class="nav-item active" onclick="nav('home')" id="n-home"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="12,2 2,7 2,17 12,22 22,17 22,7"/></svg><span data-t="home">Home</span></button>
+    <button class="nav-item" onclick="nav('wallet')" id="n-wallet"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M16 12h2"/></svg><span data-t="wallet">Wallet</span></button>
+    <button class="nav-item" onclick="nav('swap')" id="n-swap"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M7 16V4M7 4L3 8M7 4l4 4M17 8v12M17 20l-4-4M17 20l4-4"/></svg><span data-t="swap">Swap</span></button>
+    <button class="nav-item" onclick="nav('launch')" id="n-launch"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg><span data-t="launch">Launch</span></button>
+    <button class="nav-item" onclick="nav('mining')" id="n-mining"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2a10 10 0 0110 10H12V2z"/><path d="M12 12l-7 7"/><circle cx="12" cy="12" r="2"/></svg><span data-t="mine">Mine</span></button>
+    <button class="nav-item" onclick="nav('settings')" id="n-settings"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg><span data-t="set">Set</span></button>
+  </nav>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="mWallets" onclick="closeModal('mWallets')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title" data-t="myWallets">My Wallets</div>
+    <div class="modal-sub" data-t="switchBetween">SWITCH BETWEEN WALLETS</div>
+    <div class="wallet-list" id="walletList"></div>
+    <button class="add-wallet-btn" onclick="closeModal('mWallets');setTimeout(()=>openModal('mAddWallet'),200);">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+      <span data-t="addNewWallet">Add New Wallet</span>
+    </button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="mAddWallet" onclick="closeModal('mAddWallet')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title" data-t="newWallet">New Wallet</div>
+    <div class="modal-sub" data-t="createOrImport">CREATE OR IMPORT</div>
+    <div class="lf-field"><div class="lf-label" data-t="walletName">Wallet Name</div><input class="lf-input" type="text" data-tp="walletNamePh" placeholder="e.g. Trading, Savings" id="newWalName" maxlength="20"></div>
+    <div class="lf-field"><div class="lf-label" data-t="chooseIcon">Choose Icon</div><div class="emoji-grid" id="emojiGrid"></div></div>
+    <button class="btn-buy" style="margin:0;width:100%;" onclick="createNewWallet()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path d="M12 5v14M5 12h14"/></svg>
+      <span data-t="createWalletBtn">Create Wallet</span>
+    </button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="mReceive" onclick="closeModal('mReceive')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="recvTitle" data-t="receiveTitle">Receive</div>
+    <div class="modal-sub" id="recvWalName">—</div>
+    <div class="qr-wrap"><div class="qr-box" id="qrCode"></div></div>
+    <div class="hero-addr" onclick="copyAddr()" style="text-align:center;margin:14px 0 18px;background:var(--obsidian4);padding:12px;border-radius:8px;border:1px solid var(--obsidian5);" id="recvAddr">—</div>
+    <div style="display:flex;gap:8px;">
+      <button class="ob-btn ob-btn-secondary" style="flex:1;" onclick="toggleRecvToken()" id="recvTokenBtn">USDC</button>
+      <button class="btn-buy" style="margin:0;flex:2;" onclick="copyAddr();closeModal('mReceive')" data-t="copyAddress">Copy Address</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="mSend" onclick="closeModal('mSend')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="sendTitle" data-t="sendTitle">Send</div>
+    <div class="modal-sub" id="sendWalName">—</div>
+    <div style="display:flex;gap:6px;margin-bottom:14px;">
+      <div class="swap-tab active" id="sendTabGbx" onclick="setSendToken('GBX')">GBX</div>
+      <div class="swap-tab" id="sendTabUsdc" onclick="setSendToken('USDC')">USDC</div>
+    </div>
+    <div class="lf-field">
+      <div class="lf-label" data-t="recipient">Recipient Address</div>
+      <div class="send-addr-row">
+        <input class="lf-input" type="text" id="sendTo" placeholder="bn1q...">
+        <button class="qr-scan-btn" onclick="openScanner()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2"/><rect x="7" y="7" width="3" height="3"/><rect x="14" y="7" width="3" height="3"/><rect x="7" y="14" width="3" height="3"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="lf-field"><div class="lf-label" id="sendAmtLabel" data-t="amount">Amount (GBX)</div><input class="lf-input" type="number" placeholder="0.00" id="sendAmt"></div>
+    <button class="btn-buy" style="margin:0;width:100%;" onclick="closeModal('mSend');showToast(t('txBroadcast'))" data-t="confirmSend">Confirm Send</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="mScan" onclick="closeScanner()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title" data-t="scanTitle">Scan QR Code</div>
+    <div class="modal-sub" data-t="scanSub">POINT CAMERA AT QR CODE</div>
+    <div class="qr-scanner-wrap">
+      <video id="scannerVideo" autoplay muted playsinline></video>
+      <div class="qr-scanner-frame"></div>
+    </div>
+    <button class="ob-btn ob-btn-secondary" style="width:100%;" onclick="closeScanner()" data-t="cancel">Cancel</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="mSeed" onclick="closeModal('mSeed')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title" data-t="seedTitle">Seed Phrase</div>
+    <div class="modal-sub" data-t="seedRecovery">12-WORD RECOVERY</div>
+    <div class="warn-text" data-t="seedWarnFull">⚠ Anyone with these words owns your wallet. Never share, never type online.</div>
+    <div class="seed-display"><div class="seed-grid-onb" id="seedViewGrid"></div></div>
+    <button class="btn-buy" style="margin:0;width:100%;" onclick="closeModal('mSeed')" data-t="close">Close</button>
+  </div>
+</div>
+
+<!-- COIN TRADE MODAL (pump.fun-style) -->
+<div class="modal-overlay" id="mCoinTrade" onclick="closeModal('mCoinTrade')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;">
+      <div class="cp-logo" id="ctLogo" style="width:48px;height:48px;"><span>?</span></div>
+      <div>
+        <div class="modal-title" id="ctName" style="margin-bottom:0;">Coin</div>
+        <div class="modal-sub" id="ctTicker" style="margin-bottom:0;">$TICK</div>
+      </div>
+    </div>
+    <div class="stat-list" style="margin:0 0 14px;">
+      <div class="stat-row"><span class="stat-k" data-t="marketCap">Market Cap</span><span class="stat-v gold" id="ctMc">—</span></div>
+      <div class="stat-row"><span class="stat-k" data-t="price">Price</span><span class="stat-v" id="ctPrice">—</span></div>
+      <div class="stat-row"><span class="stat-k" data-t="holders">Holders</span><span class="stat-v" id="ctHolders">1</span></div>
+      <div class="stat-row" style="border-bottom:none;"><span class="stat-k" data-t="progress">Curve Progress</span><span class="stat-v" id="ctProgress">0%</span></div>
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:14px;">
+      <div class="swap-tab active" id="ctTabBuy" onclick="setCoinTradeMode('buy')" data-t="buy">Buy</div>
+      <div class="swap-tab" id="ctTabSell" onclick="setCoinTradeMode('sell')" data-t="sell">Sell</div>
+    </div>
+    <div class="lf-field"><div class="lf-label" id="ctAmtLabel" data-t="amountGbx">Amount (GBX)</div><input class="lf-input" type="number" id="ctAmt" placeholder="0" oninput="calcCoinTrade()"></div>
+    <div class="swap-quote" style="margin-bottom:14px;">
+      <div class="qp-row"><span class="qp-k" id="ctOutLabel" data-t="youReceive">You Receive</span><span class="qp-v h" id="ctOut">— TOKEN</span></div>
+      <div class="qp-row"><span class="qp-k" data-t="tradeFee">Trade Fee 1%</span><span class="qp-v" id="ctFee">—</span></div>
+    </div>
+    <button class="btn-buy" id="ctBtn" style="margin:0;width:100%;" onclick="executeCoinTrade()"><span data-t="buy">Buy</span></button>
+  </div>
+</div>
+
+<div class="toast" id="toast">Copied</div>
+
+<script>
+const API = 'https://89-167-36-203.sslip.io/liquidity-api';
+const STORAGE_KEY = 'goldbrix_state_v2';
+const EMOJIS = ['🚀','💎','🔥','⚡','🌙','👑','🎯','🦄','🐺','🐉','🦅','🌟','💰','🏆','🎨','🎭','⚔️','🛡️','🔮','🎲','🎸','🎷'];
+const SAMPLE_WORDS = ['abandon','ability','able','about','above','absent','absorb','abstract','absurd','abuse','access','accident','account','accuse','achieve','acid','acoustic','acquire','across','act','action','actor','actress','actual'];
+
+// Bonding curve constants
+const CURVE_BASE_PRICE = 0.0001;     // GBX per token at supply=0
+const CURVE_SLOPE = 0.000000001;     // price increase per token sold
+const GRADUATION_MC = 50000;          // GBX market cap to graduate
+const LAUNCH_FEE = 100;               // GBX
+
+let state = {
+  isOnboarded:false, password:null, seedPhrase:null,
+  wallets:[], activeWalletId:null,
+  coins:[]  // user-launched coins
+};
+
+let currentScreen='home', miningActive=true, pollInterval=null, currentOrderId=null;
+let selectedEmoji='🚀';
+let balanceTab='gbx';      // 'gbx' or 'usdc'
+let swapMode='buy';        // 'buy' (USDC->GBX) or 'sell' (GBX->USDC)
+let recvToken='GBX';       // 'GBX' or 'USDC'
+let sendToken='GBX';
+let coinTradeMode='buy';
+let activeCoin=null;
+
+// ═══ I18N — FULL TRANSLATIONS ═══
+const I18N = {
+  en: {
+    back:'← Back', powNative:'PROOF OF WORK · NATIVE WALLET',
+    createWallet:'Create New Wallet', importWallet:'Import Existing Wallet',
+    setPassword:'Set Password', unlockWallet:'UNLOCK YOUR WALLET ON THIS DEVICE',
+    passwordPh:'Password (8+ chars)', confirmPasswordPh:'Confirm password',
+    generateSeed:'Generate Seed Phrase', seedHint:'Stored locally · Never sent to server',
+    seedTitle:'Your Seed Phrase', seedSub:'WRITE DOWN ALL 12 WORDS IN ORDER',
+    seedWarn:'⚠ Anyone with this seed can steal your funds.',
+    seedSaved:'I Saved It Securely',
+    importTitle:'Import Wallet', importSub:'ENTER YOUR 12-WORD SEED', importBtn:'Import Wallet',
+    walletReady:'Wallet Ready', walletReadySub:'YOUR ACCOUNT IS ENCRYPTED ON THIS DEVICE',
+    enterApp:'Enter GOLDBRIX', selfCustody:'SELF-CUSTODY · YOUR KEYS · YOUR COINS',
+    home:'Home', wallet:'Wallet', swap:'Swap', launch:'Launch', mine:'Mine', set:'Set',
+    gbxBal:'GBX BALANCE', usdcBal:'USDC BALANCE',
+    totalBalance:'Total Balance', spendable:'Spendable', immature:'Immature', txCount:'TX Count',
+    walletAction:'Wallet', sendReceive:'Send · Receive',
+    swapAction:'Swap', swapDesc:'USDC ⇄ GBX',
+    launchpadAction:'Launchpad', createCoins:'Create Coins',
+    miningAction:'Mining', poolRewards:'Pool · Rewards',
+    network:'Network', chain:'Chain', bestBlock:'Best Block', miners:'Miners', custody:'Custody',
+    miner1Active:'1 Active', selfCustodyShort:'Self-Custody',
+    myCoins:'My Created Coins',
+    gbxBalanceLbl:'GBX Balance', receive:'Receive', send:'Send', switch:'Switch',
+    tokens:'Tokens', history:'History', noTx:'No transactions yet.\nMine or receive GBX to begin.',
+    swapTitle:'Swap', buyGbx:'Buy GBX', sellGbx:'Sell GBX',
+    youPay:'You Pay', youReceive:'You Receive', balance:'Balance', max:'MAX',
+    rate:'Rate', platformFee:'Platform Fee 1%', spread:'Spread 1%', totalLbl:'Total',
+    executeSwap:'Execute Swap',
+    orderStatus:'Order Status', created:'Created', payment:'Payment', payout:'Payout', filled:'Filled',
+    sendExact:'Send exact USDC to address above',
+    launchpadSub:'Deploy memecoins on GOLDBRIX · Bonding curve',
+    coinLogo:'Coin Logo / Image', uploadImage:'Upload Image', uploadImageHint:'PNG · JPG · max 2MB · 512×512',
+    coinName:'Coin Name', coinNamePh:'e.g. Gold Meme',
+    ticker:'Ticker Symbol', tickerPh:'e.g. GMEME',
+    totalSupply:'Total Supply', description:'Description (optional)', descPh:'Tell the community about your coin...',
+    socials:'Social Links (optional)',
+    devBuy:'Dev Buy (Pre-Buy at Launch)', devBuyInfo:'Buy your own coin first · Recommended for serious launches',
+    preview:'Preview', coinNameDef:'Coin Name',
+    launchFee:'Launch fee:', curveSeed:'+ bonding curve seed', deployCoin:'Deploy Coin',
+    recentLaunches:'Recent Launches',
+    active:'Active', block:'Block', worker:'Worker', payoutAddr:'Payout',
+    start:'Start', stop:'Stop', rewards:'Rewards', rewardTx:'Reward TX',
+    walletsTitle:'Wallets', manageWallets:'Manage Wallets', manageWalletsSub:'Switch · Add · Rename',
+    viewSeed:'View Seed Phrase', viewSeedSub:'12-word recovery',
+    language:'Language', seedNode:'Seed Node 1', seedNode2:'Seed Node 2',
+    aboutTitle:'About', version:'Version', core:'Core',
+    lockWallet:'Lock Wallet', lockWalletSub:'Sign out · re-enter password',
+    myWallets:'My Wallets', switchBetween:'SWITCH BETWEEN WALLETS', addNewWallet:'Add New Wallet',
+    newWallet:'New Wallet', createOrImport:'CREATE OR IMPORT',
+    walletName:'Wallet Name', walletNamePh:'e.g. Trading, Savings', chooseIcon:'Choose Icon',
+    createWalletBtn:'Create Wallet',
+    receiveTitle:'Receive', sendTitle:'Send', copyAddress:'Copy Address',
+    recipient:'Recipient Address', amount:'Amount (GBX)',
+    confirmSend:'Confirm Send',
+    scanTitle:'Scan QR Code', scanSub:'POINT CAMERA AT QR CODE', cancel:'Cancel',
+    seedRecovery:'12-WORD RECOVERY', seedWarnFull:'⚠ Anyone with these words owns your wallet.', close:'Close',
+    marketCap:'Market Cap', price:'Price', holders:'Holders', progress:'Curve Progress',
+    buy:'Buy', sell:'Sell', amountGbx:'Amount (GBX)', tradeFee:'Trade Fee 1%',
+    txBroadcast:'Transaction broadcast', addrCopied:'Address copied', addrScanned:'Address scanned',
+    cameraDenied:'Camera access denied', orderCreated:'Order created', orderFilled:'Order filled!',
+    coinDeployed:'Coin deployed', enterAmount:'Enter amount', miningStarted:'Mining started',
+    miningStopped:'Mining stopped', walletCreated:'Wallet created', walletDeleted:'Wallet deleted',
+    walletRenamed:'Renamed', walletSwitched:'Switched wallet', langSet:'Language set'
+  },
+  de: {
+    back:'← Zurück', powNative:'PROOF OF WORK · NATIVE WALLET',
+    createWallet:'Neue Wallet erstellen', importWallet:'Bestehende Wallet importieren',
+    setPassword:'Passwort festlegen', unlockWallet:'WALLET AUF DIESEM GERÄT ENTSPERREN',
+    passwordPh:'Passwort (8+ Zeichen)', confirmPasswordPh:'Passwort bestätigen',
+    generateSeed:'Seed-Phrase generieren', seedHint:'Lokal gespeichert · Nie an Server gesendet',
+    seedTitle:'Ihre Seed-Phrase', seedSub:'NOTIEREN SIE ALLE 12 WÖRTER DER REIHE NACH',
+    seedWarn:'⚠ Jeder mit diesem Seed kann Ihre Mittel stehlen.',
+    seedSaved:'Sicher gespeichert',
+    importTitle:'Wallet importieren', importSub:'GEBEN SIE IHRE 12 WÖRTER EIN', importBtn:'Wallet importieren',
+    walletReady:'Wallet bereit', walletReadySub:'IHR KONTO IST AUF DIESEM GERÄT VERSCHLÜSSELT',
+    enterApp:'GOLDBRIX betreten', selfCustody:'SELF-CUSTODY · IHRE SCHLÜSSEL · IHRE COINS',
+    home:'Start', wallet:'Wallet', swap:'Tausch', launch:'Launch', mine:'Mining', set:'Einst.',
+    gbxBal:'GBX SALDO', usdcBal:'USDC SALDO',
+    totalBalance:'Gesamtsaldo', spendable:'Verfügbar', immature:'Unreif', txCount:'TX Anzahl',
+    walletAction:'Wallet', sendReceive:'Senden · Empfangen',
+    swapAction:'Tausch', swapDesc:'USDC ⇄ GBX',
+    launchpadAction:'Launchpad', createCoins:'Coins erstellen',
+    miningAction:'Mining', poolRewards:'Pool · Rewards',
+    network:'Netzwerk', chain:'Chain', bestBlock:'Bester Block', miners:'Miner', custody:'Verwahrung',
+    miner1Active:'1 Aktiv', selfCustodyShort:'Self-Custody',
+    myCoins:'Meine erstellten Coins',
+    gbxBalanceLbl:'GBX Saldo', receive:'Empfangen', send:'Senden', switch:'Wechseln',
+    tokens:'Tokens', history:'Verlauf', noTx:'Noch keine Transaktionen.\nMinen oder GBX empfangen.',
+    swapTitle:'Tausch', buyGbx:'GBX kaufen', sellGbx:'GBX verkaufen',
+    youPay:'Sie zahlen', youReceive:'Sie erhalten', balance:'Saldo', max:'MAX',
+    rate:'Kurs', platformFee:'Plattformgebühr 1%', spread:'Spread 1%', totalLbl:'Gesamt',
+    executeSwap:'Tausch ausführen',
+    orderStatus:'Auftragsstatus', created:'Erstellt', payment:'Zahlung', payout:'Auszahlung', filled:'Erfüllt',
+    sendExact:'Exakte USDC an obige Adresse senden',
+    launchpadSub:'Memecoins auf GOLDBRIX · Bonding-Curve',
+    coinLogo:'Coin-Logo / Bild', uploadImage:'Bild hochladen', uploadImageHint:'PNG · JPG · max 2MB · 512×512',
+    coinName:'Coin-Name', coinNamePh:'z.B. Gold Meme',
+    ticker:'Ticker-Symbol', tickerPh:'z.B. GMEME',
+    totalSupply:'Gesamtangebot', description:'Beschreibung (optional)', descPh:'Erzählen Sie der Community von Ihrem Coin...',
+    socials:'Soziale Links (optional)',
+    devBuy:'Dev-Kauf (Pre-Buy beim Launch)', devBuyInfo:'Kaufen Sie Ihren Coin zuerst selbst · Empfohlen für seriöse Launches',
+    preview:'Vorschau', coinNameDef:'Coin-Name',
+    launchFee:'Launch-Gebühr:', curveSeed:'+ Bonding-Curve-Seed', deployCoin:'Coin bereitstellen',
+    recentLaunches:'Aktuelle Launches',
+    active:'Aktiv', block:'Block', worker:'Worker', payoutAddr:'Auszahlung',
+    start:'Start', stop:'Stop', rewards:'Belohnungen', rewardTx:'Belohnungs-TX',
+    walletsTitle:'Wallets', manageWallets:'Wallets verwalten', manageWalletsSub:'Wechseln · Hinzufügen',
+    viewSeed:'Seed-Phrase anzeigen', viewSeedSub:'12-Wort-Wiederherstellung',
+    language:'Sprache', seedNode:'Seed-Node 1', seedNode2:'Seed-Node 2',
+    aboutTitle:'Über', version:'Version', core:'Core',
+    lockWallet:'Wallet sperren', lockWalletSub:'Abmelden · Passwort eingeben',
+    myWallets:'Meine Wallets', switchBetween:'WALLETS WECHSELN', addNewWallet:'Neue Wallet hinzufügen',
+    newWallet:'Neue Wallet', createOrImport:'ERSTELLEN ODER IMPORTIEREN',
+    walletName:'Wallet-Name', walletNamePh:'z.B. Trading, Sparen', chooseIcon:'Symbol wählen',
+    createWalletBtn:'Wallet erstellen',
+    receiveTitle:'Empfangen', sendTitle:'Senden', copyAddress:'Adresse kopieren',
+    recipient:'Empfänger-Adresse', amount:'Betrag (GBX)',
+    confirmSend:'Senden bestätigen',
+    scanTitle:'QR-Code scannen', scanSub:'KAMERA AUF QR-CODE RICHTEN', cancel:'Abbrechen',
+    seedRecovery:'12-WORT-WIEDERHERSTELLUNG', seedWarnFull:'⚠ Wer diese Wörter hat, besitzt Ihre Wallet.', close:'Schließen',
+    marketCap:'Marktkapitalisierung', price:'Preis', holders:'Halter', progress:'Curve-Fortschritt',
+    buy:'Kaufen', sell:'Verkaufen', amountGbx:'Betrag (GBX)', tradeFee:'Handelsgebühr 1%',
+    txBroadcast:'Transaktion gesendet', addrCopied:'Adresse kopiert', addrScanned:'Adresse gescannt',
+    cameraDenied:'Kamerazugriff verweigert', orderCreated:'Auftrag erstellt', orderFilled:'Auftrag erfüllt!',
+    coinDeployed:'Coin bereitgestellt', enterAmount:'Betrag eingeben', miningStarted:'Mining gestartet',
+    miningStopped:'Mining gestoppt', walletCreated:'Wallet erstellt', walletDeleted:'Wallet gelöscht',
+    walletRenamed:'Umbenannt', walletSwitched:'Wallet gewechselt', langSet:'Sprache eingestellt'
+  },
+  ro: {
+    back:'← Înapoi', powNative:'PROOF OF WORK · PORTOFEL NATIV',
+    createWallet:'Creează Portofel Nou', importWallet:'Importă Portofel Existent',
+    setPassword:'Setează Parolă', unlockWallet:'DEBLOCHEAZĂ PORTOFELUL PE ACEST DISPOZITIV',
+    passwordPh:'Parolă (8+ caractere)', confirmPasswordPh:'Confirmă parola',
+    generateSeed:'Generează Frază Seed', seedHint:'Stocată local · Niciodată trimisă pe server',
+    seedTitle:'Fraza Ta Seed', seedSub:'SCRIE TOATE CELE 12 CUVINTE ÎN ORDINE',
+    seedWarn:'⚠ Oricine are acest seed îți poate fura fondurile.',
+    seedSaved:'Am Salvat-o În Siguranță',
+    importTitle:'Importă Portofel', importSub:'INTRODU CELE 12 CUVINTE', importBtn:'Importă Portofel',
+    walletReady:'Portofel Pregătit', walletReadySub:'CONTUL TĂU ESTE CRIPTAT PE ACEST DISPOZITIV',
+    enterApp:'Intră în GOLDBRIX', selfCustody:'AUTO-CUSTODIE · CHEILE TALE · MONEDELE TALE',
+    home:'Acasă', wallet:'Portofel', swap:'Schimb', launch:'Lansare', mine:'Minare', set:'Setări',
+    gbxBal:'SOLD GBX', usdcBal:'SOLD USDC',
+    totalBalance:'Sold Total', spendable:'Disponibil', immature:'Imatur', txCount:'Nr. TX',
+    walletAction:'Portofel', sendReceive:'Trimite · Primește',
+    swapAction:'Schimb', swapDesc:'USDC ⇄ GBX',
+    launchpadAction:'Launchpad', createCoins:'Creează Monede',
+    miningAction:'Minare', poolRewards:'Pool · Recompense',
+    network:'Rețea', chain:'Lanț', bestBlock:'Cel Mai Bun Bloc', miners:'Mineri', custody:'Custodie',
+    miner1Active:'1 Activ', selfCustodyShort:'Auto-Custodie',
+    myCoins:'Monedele Mele Create',
+    gbxBalanceLbl:'Sold GBX', receive:'Primește', send:'Trimite', switch:'Schimbă',
+    tokens:'Tokenuri', history:'Istoric', noTx:'Nicio tranzacție încă.\nMinează sau primește GBX.',
+    swapTitle:'Schimb', buyGbx:'Cumpără GBX', sellGbx:'Vinde GBX',
+    youPay:'Plătești', youReceive:'Primești', balance:'Sold', max:'MAX',
+    rate:'Curs', platformFee:'Comision Platformă 1%', spread:'Spread 1%', totalLbl:'Total',
+    executeSwap:'Execută Schimbul',
+    orderStatus:'Status Comandă', created:'Creată', payment:'Plată', payout:'Plată Out', filled:'Finalizată',
+    sendExact:'Trimite USDC exact la adresa de mai sus',
+    launchpadSub:'Lansează memecoins pe GOLDBRIX · Bonding curve',
+    coinLogo:'Logo / Imagine Monedă', uploadImage:'Încarcă Imagine', uploadImageHint:'PNG · JPG · max 2MB · 512×512',
+    coinName:'Nume Monedă', coinNamePh:'ex: Gold Meme',
+    ticker:'Simbol Ticker', tickerPh:'ex: GMEME',
+    totalSupply:'Ofertă Totală', description:'Descriere (opțional)', descPh:'Spune comunității despre moneda ta...',
+    socials:'Linkuri Sociale (opțional)',
+    devBuy:'Dev Buy (Pre-Cumpărare la Lansare)', devBuyInfo:'Cumpără-ți propria monedă prima · Recomandat pentru lansări serioase',
+    preview:'Previzualizare', coinNameDef:'Nume Monedă',
+    launchFee:'Taxă lansare:', curveSeed:'+ seed bonding curve', deployCoin:'Deploy Monedă',
+    recentLaunches:'Lansări Recente',
+    active:'Activ', block:'Bloc', worker:'Worker', payoutAddr:'Plată',
+    start:'Pornește', stop:'Oprește', rewards:'Recompense', rewardTx:'TX Recompensă',
+    walletsTitle:'Portofele', manageWallets:'Gestionează Portofele', manageWalletsSub:'Schimbă · Adaugă · Redenumește',
+    viewSeed:'Vezi Fraza Seed', viewSeedSub:'Recuperare 12 cuvinte',
+    language:'Limbă', seedNode:'Nod Seed 1', seedNode2:'Nod Seed 2',
+    aboutTitle:'Despre', version:'Versiune', core:'Core',
+    lockWallet:'Blochează Portofelul', lockWalletSub:'Deconectare · reintrodu parola',
+    myWallets:'Portofelele Mele', switchBetween:'SCHIMBĂ ÎNTRE PORTOFELE', addNewWallet:'Adaugă Portofel Nou',
+    newWallet:'Portofel Nou', createOrImport:'CREEAZĂ SAU IMPORTĂ',
+    walletName:'Nume Portofel', walletNamePh:'ex: Trading, Economii', chooseIcon:'Alege Icon',
+    createWalletBtn:'Creează Portofel',
+    receiveTitle:'Primește', sendTitle:'Trimite', copyAddress:'Copiază Adresa',
+    recipient:'Adresă Destinatar', amount:'Sumă (GBX)',
+    confirmSend:'Confirmă Trimitere',
+    scanTitle:'Scanează Cod QR', scanSub:'ÎNDREAPTĂ CAMERA SPRE QR', cancel:'Anulează',
+    seedRecovery:'RECUPERARE 12 CUVINTE', seedWarnFull:'⚠ Oricine are aceste cuvinte îți deține portofelul.', close:'Închide',
+    marketCap:'Capitalizare Piață', price:'Preț', holders:'Deținători', progress:'Progres Curbă',
+    buy:'Cumpără', sell:'Vinde', amountGbx:'Sumă (GBX)', tradeFee:'Taxă Tranzacție 1%',
+    txBroadcast:'Tranzacție trimisă', addrCopied:'Adresă copiată', addrScanned:'Adresă scanată',
+    cameraDenied:'Acces cameră refuzat', orderCreated:'Comandă creată', orderFilled:'Comandă finalizată!',
+    coinDeployed:'Monedă lansată', enterAmount:'Introdu suma', miningStarted:'Minare pornită',
+    miningStopped:'Minare oprită', walletCreated:'Portofel creat', walletDeleted:'Portofel șters',
+    walletRenamed:'Redenumit', walletSwitched:'Portofel schimbat', langSet:'Limbă setată'
+  },
+  zh: {
+    back:'← 返回', powNative:'工作量证明 · 原生钱包',
+    createWallet:'创建新钱包', importWallet:'导入现有钱包',
+    setPassword:'设置密码', unlockWallet:'在此设备上解锁您的钱包',
+    passwordPh:'密码（8+字符）', confirmPasswordPh:'确认密码',
+    generateSeed:'生成助记词', seedHint:'本地存储 · 永不发送至服务器',
+    seedTitle:'您的助记词', seedSub:'按顺序记下所有12个单词',
+    seedWarn:'⚠ 拥有此助记词的任何人都可窃取您的资金。',
+    seedSaved:'我已安全保存',
+    importTitle:'导入钱包', importSub:'输入您的12个助记词', importBtn:'导入钱包',
+    walletReady:'钱包就绪', walletReadySub:'您的账户在此设备上已加密',
+    enterApp:'进入 GOLDBRIX', selfCustody:'自我托管 · 您的密钥 · 您的币',
+    home:'首页', wallet:'钱包', swap:'兑换', launch:'发行', mine:'挖矿', set:'设置',
+    gbxBal:'GBX 余额', usdcBal:'USDC 余额',
+    totalBalance:'总余额', spendable:'可用', immature:'未成熟', txCount:'交易数',
+    walletAction:'钱包', sendReceive:'发送 · 接收',
+    swapAction:'兑换', swapDesc:'USDC ⇄ GBX',
+    launchpadAction:'发射台', createCoins:'创建代币',
+    miningAction:'挖矿', poolRewards:'矿池 · 奖励',
+    network:'网络', chain:'链', bestBlock:'最佳区块', miners:'矿工', custody:'托管',
+    miner1Active:'1 活跃', selfCustodyShort:'自我托管',
+    myCoins:'我创建的代币',
+    gbxBalanceLbl:'GBX 余额', receive:'接收', send:'发送', switch:'切换',
+    tokens:'代币', history:'历史', noTx:'暂无交易。\n挖矿或接收GBX以开始。',
+    swapTitle:'兑换', buyGbx:'购买GBX', sellGbx:'出售GBX',
+    youPay:'您支付', youReceive:'您收到', balance:'余额', max:'最大',
+    rate:'汇率', platformFee:'平台费 1%', spread:'价差 1%', totalLbl:'总计',
+    executeSwap:'执行兑换',
+    orderStatus:'订单状态', created:'已创建', payment:'付款', payout:'支付', filled:'已完成',
+    sendExact:'向上述地址发送精确USDC',
+    launchpadSub:'在GOLDBRIX上部署模因币 · 联合曲线',
+    coinLogo:'代币标志/图像', uploadImage:'上传图像', uploadImageHint:'PNG · JPG · 最大2MB · 512×512',
+    coinName:'代币名称', coinNamePh:'例如：黄金模因',
+    ticker:'代币符号', tickerPh:'例如：GMEME',
+    totalSupply:'总供应量', description:'描述（可选）', descPh:'告诉社区您的代币...',
+    socials:'社交链接（可选）',
+    devBuy:'开发者预购（启动时预购）', devBuyInfo:'先购买自己的代币 · 推荐用于正式发行',
+    preview:'预览', coinNameDef:'代币名称',
+    launchFee:'发行费：', curveSeed:'+ 联合曲线种子', deployCoin:'部署代币',
+    recentLaunches:'近期发行',
+    active:'活跃', block:'区块', worker:'矿工', payoutAddr:'支付',
+    start:'开始', stop:'停止', rewards:'奖励', rewardTx:'奖励交易',
+    walletsTitle:'钱包', manageWallets:'管理钱包', manageWalletsSub:'切换 · 添加 · 重命名',
+    viewSeed:'查看助记词', viewSeedSub:'12词恢复',
+    language:'语言', seedNode:'种子节点1', seedNode2:'种子节点2',
+    aboutTitle:'关于', version:'版本', core:'核心',
+    lockWallet:'锁定钱包', lockWalletSub:'退出 · 重新输入密码',
+    myWallets:'我的钱包', switchBetween:'切换钱包', addNewWallet:'添加新钱包',
+    newWallet:'新钱包', createOrImport:'创建或导入',
+    walletName:'钱包名称', walletNamePh:'例如：交易、储蓄', chooseIcon:'选择图标',
+    createWalletBtn:'创建钱包',
+    receiveTitle:'接收', sendTitle:'发送', copyAddress:'复制地址',
+    recipient:'收款地址', amount:'金额 (GBX)',
+    confirmSend:'确认发送',
+    scanTitle:'扫描二维码', scanSub:'将相机对准二维码', cancel:'取消',
+    seedRecovery:'12词恢复', seedWarnFull:'⚠ 拥有这些词的任何人都拥有您的钱包。', close:'关闭',
+    marketCap:'市值', price:'价格', holders:'持有人', progress:'曲线进度',
+    buy:'买', sell:'卖', amountGbx:'金额 (GBX)', tradeFee:'交易费 1%',
+    txBroadcast:'交易已广播', addrCopied:'地址已复制', addrScanned:'地址已扫描',
+    cameraDenied:'相机访问被拒绝', orderCreated:'订单已创建', orderFilled:'订单已完成！',
+    coinDeployed:'代币已部署', enterAmount:'输入金额', miningStarted:'挖矿已开始',
+    miningStopped:'挖矿已停止', walletCreated:'钱包已创建', walletDeleted:'钱包已删除',
+    walletRenamed:'已重命名', walletSwitched:'已切换钱包', langSet:'语言已设置'
+  },
+  ar: {
+    back:'→ رجوع', powNative:'إثبات العمل · محفظة أصلية',
+    createWallet:'إنشاء محفظة جديدة', importWallet:'استيراد محفظة موجودة',
+    setPassword:'تعيين كلمة المرور', unlockWallet:'افتح محفظتك على هذا الجهاز',
+    passwordPh:'كلمة المرور (8+ أحرف)', confirmPasswordPh:'تأكيد كلمة المرور',
+    generateSeed:'توليد عبارة البذرة', seedHint:'مخزنة محلياً · لا ترسل أبداً للخادم',
+    seedTitle:'عبارة البذرة الخاصة بك', seedSub:'دوّن جميع الكلمات الـ12 بالترتيب',
+    seedWarn:'⚠ أي شخص لديه هذه البذرة يمكنه سرقة أموالك.',
+    seedSaved:'لقد حفظتها بأمان',
+    importTitle:'استيراد محفظة', importSub:'أدخل عبارة الـ12 كلمة', importBtn:'استيراد محفظة',
+    walletReady:'المحفظة جاهزة', walletReadySub:'حسابك مشفر على هذا الجهاز',
+    enterApp:'دخول GOLDBRIX', selfCustody:'حفظ ذاتي · مفاتيحك · عملاتك',
+    home:'الرئيسية', wallet:'المحفظة', swap:'تبادل', launch:'إطلاق', mine:'تعدين', set:'إعدادات',
+    gbxBal:'رصيد GBX', usdcBal:'رصيد USDC',
+    totalBalance:'الرصيد الإجمالي', spendable:'قابل للإنفاق', immature:'غير ناضج', txCount:'عدد المعاملات',
+    walletAction:'المحفظة', sendReceive:'إرسال · استلام',
+    swapAction:'تبادل', swapDesc:'USDC ⇄ GBX',
+    launchpadAction:'منصة الإطلاق', createCoins:'إنشاء عملات',
+    miningAction:'تعدين', poolRewards:'تجمع · مكافآت',
+    network:'الشبكة', chain:'السلسلة', bestBlock:'أفضل كتلة', miners:'المعدنون', custody:'الحفظ',
+    miner1Active:'1 نشط', selfCustodyShort:'حفظ ذاتي',
+    myCoins:'عملاتي المنشأة',
+    gbxBalanceLbl:'رصيد GBX', receive:'استلام', send:'إرسال', switch:'تبديل',
+    tokens:'الرموز', history:'السجل', noTx:'لا توجد معاملات بعد.\nقم بالتعدين أو استلم GBX.',
+    swapTitle:'تبادل', buyGbx:'شراء GBX', sellGbx:'بيع GBX',
+    youPay:'أنت تدفع', youReceive:'أنت تستلم', balance:'الرصيد', max:'الأقصى',
+    rate:'السعر', platformFee:'رسوم المنصة 1%', spread:'الفرق 1%', totalLbl:'المجموع',
+    executeSwap:'تنفيذ التبادل',
+    orderStatus:'حالة الطلب', created:'تم الإنشاء', payment:'الدفع', payout:'الصرف', filled:'مكتمل',
+    sendExact:'أرسل USDC الدقيق إلى العنوان أعلاه',
+    launchpadSub:'انشر memecoins على GOLDBRIX · منحنى ربط',
+    coinLogo:'شعار / صورة العملة', uploadImage:'رفع صورة', uploadImageHint:'PNG · JPG · 2MB كحد أقصى · 512×512',
+    coinName:'اسم العملة', coinNamePh:'مثل: ميم ذهبي',
+    ticker:'رمز التداول', tickerPh:'مثل: GMEME',
+    totalSupply:'العرض الإجمالي', description:'الوصف (اختياري)', descPh:'أخبر المجتمع عن عملتك...',
+    socials:'روابط التواصل (اختياري)',
+    devBuy:'شراء المطور (شراء مسبق عند الإطلاق)', devBuyInfo:'اشتر عملتك أولاً · موصى به للإطلاقات الجادة',
+    preview:'معاينة', coinNameDef:'اسم العملة',
+    launchFee:'رسوم الإطلاق:', curveSeed:'+ بذرة منحنى الربط', deployCoin:'نشر العملة',
+    recentLaunches:'الإطلاقات الأخيرة',
+    active:'نشط', block:'كتلة', worker:'العامل', payoutAddr:'الصرف',
+    start:'بدء', stop:'إيقاف', rewards:'المكافآت', rewardTx:'معاملة مكافأة',
+    walletsTitle:'المحافظ', manageWallets:'إدارة المحافظ', manageWalletsSub:'تبديل · إضافة · تسمية',
+    viewSeed:'عرض عبارة البذرة', viewSeedSub:'استرداد 12 كلمة',
+    language:'اللغة', seedNode:'عقدة البذرة 1', seedNode2:'عقدة البذرة 2',
+    aboutTitle:'حول', version:'الإصدار', core:'النواة',
+    lockWallet:'قفل المحفظة', lockWalletSub:'تسجيل خروج · إعادة إدخال كلمة المرور',
+    myWallets:'محافظي', switchBetween:'التبديل بين المحافظ', addNewWallet:'إضافة محفظة جديدة',
+    newWallet:'محفظة جديدة', createOrImport:'إنشاء أو استيراد',
+    walletName:'اسم المحفظة', walletNamePh:'مثل: تداول، توفير', chooseIcon:'اختر الأيقونة',
+    createWalletBtn:'إنشاء محفظة',
+    receiveTitle:'استلام', sendTitle:'إرسال', copyAddress:'نسخ العنوان',
+    recipient:'عنوان المستلم', amount:'المبلغ (GBX)',
+    confirmSend:'تأكيد الإرسال',
+    scanTitle:'مسح رمز QR', scanSub:'وجه الكاميرا نحو الرمز', cancel:'إلغاء',
+    seedRecovery:'استرداد 12 كلمة', seedWarnFull:'⚠ من يمتلك هذه الكلمات يمتلك محفظتك.', close:'إغلاق',
+    marketCap:'القيمة السوقية', price:'السعر', holders:'الحاملون', progress:'تقدم المنحنى',
+    buy:'شراء', sell:'بيع', amountGbx:'المبلغ (GBX)', tradeFee:'رسوم التداول 1%',
+    txBroadcast:'تم بث المعاملة', addrCopied:'تم نسخ العنوان', addrScanned:'تم مسح العنوان',
+    cameraDenied:'تم رفض الوصول للكاميرا', orderCreated:'تم إنشاء الطلب', orderFilled:'تم تنفيذ الطلب!',
+    coinDeployed:'تم نشر العملة', enterAmount:'أدخل المبلغ', miningStarted:'بدأ التعدين',
+    miningStopped:'توقف التعدين', walletCreated:'تم إنشاء المحفظة', walletDeleted:'تم حذف المحفظة',
+    walletRenamed:'تم التسمية', walletSwitched:'تم تبديل المحفظة', langSet:'تم تعيين اللغة'
+  }
+};
+let currentLang='en';
+function t(key) { return (I18N[currentLang] && I18N[currentLang][key]) || I18N.en[key] || key; }
+function applyLang(lang) {
+  currentLang = lang;
+  document.documentElement.lang = lang;
+  document.documentElement.dir = (lang === 'ar') ? 'rtl' : 'ltr';
+  document.querySelectorAll('[data-t]').forEach(el => {
+    const k = el.getAttribute('data-t');
+    if (I18N[lang] && I18N[lang][k]) el.textContent = I18N[lang][k];
+  });
+  document.querySelectorAll('[data-tp]').forEach(el => {
+    const k = el.getAttribute('data-tp');
+    if (I18N[lang] && I18N[lang][k]) el.placeholder = I18N[lang][k];
+  });
+  saveLang();
+}
+function saveLang() { try { localStorage.setItem('goldbrix_lang', currentLang); } catch(e) {} }
+function loadLang() { try { const l = localStorage.getItem('goldbrix_lang'); if (l) currentLang = l; } catch(e) {} }
+
+// ═══ STORAGE ═══
+function saveState() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {} }
+function loadState() {
+  try { const s = localStorage.getItem(STORAGE_KEY); if (s) state = Object.assign(state, JSON.parse(s)); } catch(e) {}
+  if (!state.coins) state.coins = [];
+}
+
+// ═══ HELPERS ═══
+function genSeed() { return Array.from({length:12}, () => SAMPLE_WORDS[Math.floor(Math.random()*SAMPLE_WORDS.length)]); }
+function genGbxAddr() { const c='qwertyuiopasdfghjklzxcvbnm0123456789'; let s='bn1q'; for(let i=0;i<38;i++)s+=c[Math.floor(Math.random()*c.length)]; return s; }
+function genSolAddr() { const c='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz123456789'; let s=''; for(let i=0;i<43;i++)s+=c[Math.floor(Math.random()*c.length)]; return s; }
+function genId() { return 'w_' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function shortAddr(a) { return a ? a.slice(0,8) + '...' + a.slice(-6) : ''; }
+function fmt(n, d=2) { return Number(n).toLocaleString(undefined, {maximumFractionDigits:d}); }
+
+// ═══ ONBOARDING ═══
+function obStep(name) {
+  document.querySelectorAll('.ob-step').forEach(s => s.classList.remove('active'));
+  document.getElementById('step-'+name).classList.add('active');
+  document.getElementById('obBack').style.display = (name === 'welcome') ? 'none' : 'flex';
+}
+
+function createWalletFlow() {
+  const p1 = document.getElementById('pwd1').value;
+  const p2 = document.getElementById('pwd2').value;
+  if (p1.length < 8) { alert('Password 8+ chars'); return; }
+  if (p1 !== p2) { alert('Passwords do not match'); return; }
+  state.password = p1;
+  const seed = genSeed();
+  state.seedPhrase = seed;
+  document.getElementById('seedRevealGrid').innerHTML = seed.map((w,i) =>
+    `<div class="sw-onb"><span class="sw-n">${i+1}</span><span class="sw-w">${w}</span></div>`
+  ).join('');
+  obStep('seed');
+}
+
+function importWallet() {
+  const seed = document.getElementById('importSeed').value.trim().split(/\s+/);
+  const pwd = document.getElementById('importPwd').value;
+  if (seed.length !== 12) { alert('Enter 12 words'); return; }
+  if (pwd.length < 8) { alert('Password 8+ chars'); return; }
+  state.password = pwd;
+  state.seedPhrase = seed;
+  obStep('confirm');
+}
+
+function finishOnboarding() {
+  const w = {
+    id: genId(), name: 'Main Wallet', emoji: '🚀',
+    address: genGbxAddr(), solAddress: genSolAddr(),
+    balance: 130949.9997, spendable: 125999.9997, immature: 4950,
+    usdcBalance: 0
+  };
+  state.wallets = [w];
+  state.activeWalletId = w.id;
+  state.isOnboarded = true;
+  saveState();
+  document.getElementById('onboard').classList.remove('show');
+  document.getElementById('app').style.display = 'flex';
+  refreshUI();
+}
+
+function lockApp() {
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('onboard').classList.add('show');
+  obStep('welcome');
+}
+
+// ═══ WALLETS ═══
+function getActiveWallet() { return state.wallets.find(w => w.id === state.activeWalletId) || state.wallets[0]; }
+
+function switchWallet(id) {
+  state.activeWalletId = id; saveState(); refreshUI(); closeModal('mWallets');
+  showToast(t('walletSwitched'));
+}
+
+function renderWalletList() {
+  const list = document.getElementById('walletList');
+  if (!list) return;
+  list.innerHTML = state.wallets.map(w => `
+    <div class="wallet-item ${w.id === state.activeWalletId ? 'active' : ''}" onclick="switchWallet('${w.id}')">
+      <div class="wi-emoji">${w.emoji}</div>
+      <div class="wi-info">
+        <div class="wi-name">${w.name}</div>
+        <div class="wi-bal">${fmt(w.balance,2)} GBX · ${fmt(w.usdcBalance||0,2)} USDC</div>
+      </div>
+      <div class="wi-actions" onclick="event.stopPropagation()">
+        <div class="wi-action-btn" onclick="renameWallet('${w.id}')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 113 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </div>
+        ${state.wallets.length > 1 ? `<div class="wi-action-btn" onclick="deleteWallet('${w.id}')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14H7L5 6"/></svg>
+        </div>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderEmojiGrid() {
+  const g = document.getElementById('emojiGrid');
+  if (!g) return;
+  g.innerHTML = EMOJIS.map(e => `<div class="emoji-btn ${e === selectedEmoji ? 'active' : ''}" onclick="pickEmoji('${e}')">${e}</div>`).join('');
+}
+
+function pickEmoji(e) { selectedEmoji = e; renderEmojiGrid(); }
+
+function createNewWallet() {
+  const name = document.getElementById('newWalName').value.trim() || ('Wallet ' + (state.wallets.length + 1));
+  const w = {
+    id: genId(), name: name, emoji: selectedEmoji,
+    address: genGbxAddr(), solAddress: genSolAddr(),
+    balance: 0, spendable: 0, immature: 0, usdcBalance: 0
+  };
+  state.wallets.push(w);
+  state.activeWalletId = w.id;
+  saveState();
+  closeModal('mAddWallet');
+  document.getElementById('newWalName').value = '';
+  selectedEmoji = '🚀'; renderEmojiGrid();
+  refreshUI();
+  showToast(t('walletCreated'));
+}
+
+function renameWallet(id) {
+  const w = state.wallets.find(x => x.id === id);
+  if (!w) return;
+  const n = prompt('Rename:', w.name);
+  if (n && n.trim()) { w.name = n.trim(); saveState(); refreshUI(); renderWalletList(); showToast(t('walletRenamed')); }
+}
+
+function deleteWallet(id) {
+  if (state.wallets.length <= 1) return;
+  if (!confirm('Delete?')) return;
+  state.wallets = state.wallets.filter(w => w.id !== id);
+  if (state.activeWalletId === id) state.activeWalletId = state.wallets[0].id;
+  saveState(); refreshUI(); renderWalletList(); showToast(t('walletDeleted'));
+}
+
+// ═══ BALANCE TAB SWITCH ═══
+function setBalanceTab(tab) {
+  balanceTab = tab;
+  document.getElementById('balTabGbx').classList.toggle('active', tab === 'gbx');
+  document.getElementById('balTabUsdc').classList.toggle('active', tab === 'usdc');
+  document.getElementById('hero').classList.toggle('usdc-mode', tab === 'usdc');
+  refreshUI();
+}
+
+function refreshUI() {
+  const w = getActiveWallet();
+  if (!w) return;
+  document.getElementById('profAvatar').textContent = w.emoji;
+  document.getElementById('profName').textContent = w.name;
+  document.getElementById('profAddr').textContent = shortAddr(w.address);
+
+  // Hero
+  document.getElementById('heroWalletName').textContent = w.name;
+  if (balanceTab === 'gbx') {
+    document.getElementById('heroAmt').innerHTML = fmt(w.balance,0) + '<span class="hero-currency">GBX</span>';
+    document.getElementById('heroAddr').textContent = w.address;
+    document.getElementById('heroSpend').textContent = fmt(w.spendable,0);
+    document.getElementById('heroImm').textContent = fmt(w.immature,0);
+    document.getElementById('heroChips').style.display = 'grid';
+  } else {
+    document.getElementById('heroAmt').innerHTML = fmt(w.usdcBalance,2) + '<span class="hero-currency">USDC</span>';
+    document.getElementById('heroAddr').textContent = w.solAddress + ' (Solana)';
+    document.getElementById('heroChips').style.display = 'none';
+  }
+
+  // Wallet screen
+  document.getElementById('walName2').textContent = w.name;
+  document.getElementById('walAmt').innerHTML = fmt(w.spendable,0) + '<span class="hero-currency">GBX</span>';
+  document.getElementById('walAddr2').textContent = w.address;
+
+  // Tokens list
+  document.getElementById('tokGbxBal').textContent = fmt(w.balance,4) + ' GBX';
+  document.getElementById('tokGbxValue').textContent = '$' + fmt(w.balance * 0.01, 2);
+  document.getElementById('tokUsdcBal').textContent = fmt(w.usdcBalance,2) + ' USDC';
+  document.getElementById('tokUsdcValue').textContent = '$' + fmt(w.usdcBalance, 2);
+
+  // Mining
+  document.getElementById('mPayout').textContent = shortAddr(w.address);
+
+  // Swap balances
+  updateSwapBalances();
+
+  renderWalletList();
+  renderMyCoins();
+  renderCoinMarket();
+
+  if (state.seedPhrase) {
+    const sg = document.getElementById('seedViewGrid');
+    if (sg) sg.innerHTML = state.seedPhrase.map((w,i) => `<div class="sw-onb"><span class="sw-n">${i+1}</span><span class="sw-w">${w}</span></div>`).join('');
+  }
+}
+
+function copyAddr() {
+  const w = getActiveWallet();
+  if (!w) return;
+  const addr = (recvToken === 'USDC' || balanceTab === 'usdc') ? w.solAddress : w.address;
+  navigator.clipboard.writeText(addr).catch(()=>{});
+  showToast(t('addrCopied'));
+}
+
+const screens = { home:'sHome', wallet:'sWallet', swap:'sSwap', launch:'sLaunch', mining:'sMining', settings:'sSettings' };
+function nav(id) {
+  document.getElementById(screens[currentScreen]).style.display = 'none';
+  document.getElementById('n-'+currentScreen)?.classList.remove('active');
+  currentScreen = id;
+  document.getElementById(screens[id]).style.display = 'block';
+  document.getElementById('n-'+id)?.classList.add('active');
+}
+
+function openModal(id) {
+  document.getElementById(id).classList.add('show');
+  if (id === 'mReceive') { recvToken='GBX'; updateRecvModal(); }
+  if (id === 'mSend') { setSendToken('GBX'); }
+}
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+function showToast(msg) {
+  const x = document.getElementById('toast');
+  x.textContent = msg; x.classList.add('show');
+  setTimeout(() => x.classList.remove('show'), 2200);
+}
+
+// ═══ RECEIVE MODAL ═══
+function toggleRecvToken() {
+  recvToken = (recvToken === 'GBX') ? 'USDC' : 'GBX';
+  updateRecvModal();
+}
+function updateRecvModal() {
+  const w = getActiveWallet(); if (!w) return;
+  const addr = (recvToken === 'USDC') ? w.solAddress : w.address;
+  document.getElementById('recvTitle').textContent = t('receiveTitle') + ' ' + recvToken;
+  document.getElementById('recvWalName').textContent = w.name + ' · ' + recvToken;
+  document.getElementById('recvAddr').textContent = addr;
+  document.getElementById('recvTokenBtn').textContent = (recvToken === 'GBX') ? 'USDC' : 'GBX';
+  renderQR(addr);
+}
+let qrInstance = null;
+function renderQR(text) {
+  const box = document.getElementById('qrCode'); if (!box) return;
+  box.innerHTML = '';
+  if (typeof QRCode !== 'undefined') {
+    qrInstance = new QRCode(box, { text:text, width:172, height:172, colorDark:'#000', colorLight:'#fff', correctLevel:QRCode.CorrectLevel.M });
+  }
+}
+
+// ═══ SEND MODAL ═══
+function setSendToken(tok) {
+  sendToken = tok;
+  document.getElementById('sendTabGbx').classList.toggle('active', tok === 'GBX');
+  document.getElementById('sendTabUsdc').classList.toggle('active', tok === 'USDC');
+  const w = getActiveWallet(); if (!w) return;
+  document.getElementById('sendWalName').textContent = 'FROM: ' + w.name + ' · ' + tok;
+  document.getElementById('sendAmtLabel').textContent = t('amount').replace('GBX', tok);
+  document.getElementById('sendTo').placeholder = (tok === 'GBX') ? 'bn1q...' : 'Solana address...';
+}
+
+// ═══ QR SCANNER ═══
+let scanStream=null, scanLoop=null;
+async function openScanner() {
+  openModal('mScan');
+  const video = document.getElementById('scannerVideo');
+  try {
+    scanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    video.srcObject = scanStream; video.play();
+    startScanLoop(video);
+  } catch(e) { showToast(t('cameraDenied')); closeScanner(); }
+}
+function startScanLoop(video) {
+  const c = document.createElement('canvas'); const cx = c.getContext('2d');
+  scanLoop = setInterval(() => {
+    if (video.readyState !== video.HAVE_ENOUGH_DATA) return;
+    c.width = video.videoWidth; c.height = video.videoHeight;
+    cx.drawImage(video, 0, 0, c.width, c.height);
+    const img = cx.getImageData(0, 0, c.width, c.height);
+    if (typeof jsQR !== 'undefined') {
+      const code = jsQR(img.data, img.width, img.height);
+      if (code && code.data) {
+        let v = code.data.replace(/^goldbrix:/i, '').replace(/^solana:/i, '').split('?')[0];
+        document.getElementById('sendTo').value = v;
+        showToast(t('addrScanned')); closeScanner();
+      }
+    }
+  }, 250);
+}
+function closeScanner() {
+  if (scanLoop) { clearInterval(scanLoop); scanLoop = null; }
+  if (scanStream) { scanStream.getTracks().forEach(t => t.stop()); scanStream = null; }
+  closeModal('mScan');
+}
+
+// ═══ SWAP ═══
+function setSwapMode(mode) {
+  swapMode = mode;
+  document.getElementById('swapTabBuy').classList.toggle('active', mode === 'buy');
+  document.getElementById('swapTabSell').classList.toggle('active', mode === 'sell');
+  if (mode === 'buy') {
+    document.getElementById('swapInIcon').className = 'swap-token-icon token-usdc';
+    document.getElementById('swapInIcon').textContent = '$';
+    document.getElementById('swapInName').textContent = 'USDC';
+    document.getElementById('swapOutIcon').className = 'swap-token-icon token-gbx';
+    document.getElementById('swapOutIcon').textContent = 'G';
+    document.getElementById('swapOutName').textContent = 'GBX';
+    document.getElementById('swapBtn').classList.remove('sell');
+  } else {
+    document.getElementById('swapInIcon').className = 'swap-token-icon token-gbx';
+    document.getElementById('swapInIcon').textContent = 'G';
+    document.getElementById('swapInName').textContent = 'GBX';
+    document.getElementById('swapOutIcon').className = 'swap-token-icon token-usdc';
+    document.getElementById('swapOutIcon').textContent = '$';
+    document.getElementById('swapOutName').textContent = 'USDC';
+    document.getElementById('swapBtn').classList.add('sell');
+  }
+  updateSwapBalances();
+  calcSwap();
+}
+
+function flipSwap() { setSwapMode(swapMode === 'buy' ? 'sell' : 'buy'); }
+
+function updateSwapBalances() {
+  const w = getActiveWallet(); if (!w) return;
+  if (swapMode === 'buy') {
+    document.getElementById('swapInBal').textContent = fmt(w.usdcBalance,2) + ' USDC';
+    document.getElementById('swapOutBal').textContent = fmt(w.balance,2) + ' GBX';
+  } else {
+    document.getElementById('swapInBal').textContent = fmt(w.spendable,2) + ' GBX';
+    document.getElementById('swapOutBal').textContent = fmt(w.usdcBalance,2) + ' USDC';
+  }
+}
+
+function setSwapMax() {
+  const w = getActiveWallet(); if (!w) return;
+  document.getElementById('swapInAmt').value = (swapMode === 'buy') ? w.usdcBalance : w.spendable;
+  calcSwap();
+}
+
+function calcSwap() {
+  const u = parseFloat(document.getElementById('swapInAmt').value) || 0;
+  if (swapMode === 'buy') {
+    // 1 USDC = 100 GBX, fee 1%, spread 1% => total 1.02 USDC for 100 GBX
+    const gbxOut = u * 100;
+    document.getElementById('swapOutAmt').value = fmt(gbxOut, 2);
+    document.getElementById('swapRate').textContent = '1 USDC = 100 GBX';
+    document.getElementById('swapFee').textContent = fmt(u*0.01,2) + ' USDC';
+    document.getElementById('swapSpread').textContent = fmt(u*0.01,2) + ' USDC';
+    document.getElementById('swapTotal').textContent = fmt(u*1.02,2) + ' USDC';
+  } else {
+    // Sell GBX: 100 GBX = 0.98 USDC (1% fee + 1% spread)
+    const usdcOut = (u / 100) * 0.98;
+    document.getElementById('swapOutAmt').value = fmt(usdcOut, 4);
+    document.getElementById('swapRate').textContent = '100 GBX = 0.98 USDC';
+    document.getElementById('swapFee').textContent = fmt((u/100)*0.01,4) + ' USDC';
+    document.getElementById('swapSpread').textContent = fmt((u/100)*0.01,4) + ' USDC';
+    document.getElementById('swapTotal').textContent = fmt(usdcOut,4) + ' USDC';
+  }
+}
+
+async function executeSwap() {
+  const w = getActiveWallet(); if (!w) return;
+  const amt = parseFloat(document.getElementById('swapInAmt').value) || 0;
+  if (amt <= 0) { showToast(t('enterAmount')); return; }
+
+  if (swapMode === 'buy') {
+    // BUY: USDC -> GBX (existing flow)
+    const gbx = Math.round(amt * 100);
+    const btn = document.getElementById('swapBtn');
+    btn.disabled = true;
+    try {
+      const res = await fetch(API + '/api/buyer/order/create', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ buyer_gbx_address: w.address, gbx_amount: gbx })
+      });
+      const data = await res.json();
+      if (data.ok && data.order) {
+        currentOrderId = data.order.order_id;
+        document.getElementById('otAddr').textContent = data.order.usdc_payment_address;
+        document.getElementById('otHint').textContent = 'Send ' + (data.payment?.amount_usdc || amt*1.02) + ' USDC · Solana';
+        document.getElementById('orderTrack').classList.add('show');
+        showToast(t('orderCreated'));
+        startPolling(currentOrderId);
+      } else {
+        showToast('Error: ' + (data.error || 'unknown'));
+      }
+    } catch(e) { showToast('Network error'); }
+    btn.disabled = false;
+  } else {
+    // SELL: GBX -> USDC (simulate locally for demo, real backend would handle)
+    if (amt > w.spendable) { showToast('Insufficient GBX'); return; }
+    const usdcOut = (amt / 100) * 0.98;
+    w.balance -= amt; w.spendable -= amt; w.usdcBalance = (w.usdcBalance || 0) + usdcOut;
+    saveState(); refreshUI();
+    showToast(t('orderFilled') + ' +' + fmt(usdcOut,4) + ' USDC');
+
+    document.getElementById('os2').className = 'ot-circle done'; document.getElementById('os2').textContent = '✓';
+    document.getElementById('os3').className = 'ot-circle done'; document.getElementById('os3').textContent = '✓';
+    document.getElementById('os4').className = 'ot-circle done'; document.getElementById('os4').textContent = '✓';
+    document.getElementById('ol2').className = 'ot-line done';
+    document.getElementById('ol3').className = 'ot-line done';
+    document.getElementById('otAddr').textContent = w.solAddress;
+    document.getElementById('otHint').textContent = '✓ ' + fmt(usdcOut,4) + ' USDC delivered';
+    document.getElementById('orderTrack').classList.add('show');
+  }
+}
+
+function startPolling(orderId) {
+  if (pollInterval) clearInterval(pollInterval);
+  pollInterval = setInterval(() => pollStatus(orderId), 8000);
+}
+async function pollStatus(orderId) {
+  try {
+    const res = await fetch(API + '/api/order/status/' + orderId);
+    const data = await res.json();
+    if (!data.ok) return;
+    if (data.status === 'filled') {
+      ['os2','os3','os4'].forEach(id => { document.getElementById(id).className = 'ot-circle done'; document.getElementById(id).textContent = '✓'; });
+      document.getElementById('ol2').className = 'ot-line done';
+      document.getElementById('ol3').className = 'ot-line done';
+      document.getElementById('otHint').textContent = '✓ ' + data.gbx_amount + ' GBX delivered';
+      showToast(t('orderFilled'));
+      const w = getActiveWallet();
+      if (w) { w.balance = (w.balance || 0) + (data.gbx_amount || 0); w.spendable = (w.spendable || 0) + (data.gbx_amount || 0); saveState(); refreshUI(); }
+      clearInterval(pollInterval);
+    }
+  } catch(e) {}
+}
+
+// ═══ LAUNCHPAD ═══
+function previewLogo(e) {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = (ev) => {
+    document.getElementById('logoPreview').innerHTML = `<img src="${ev.target.result}">`;
+    document.getElementById('cpLogo').innerHTML = `<img src="${ev.target.result}">`;
+  };
+  r.readAsDataURL(f);
+}
+
+function updatePreview() {
+  const name = document.getElementById('lName').value || t('coinNameDef');
+  const ticker = (document.getElementById('lTicker').value || 'TICKER').toUpperCase();
+  const supply = parseInt(document.getElementById('lSupply').value || 0);
+  document.getElementById('cpName').textContent = name;
+  document.getElementById('cpTicker').textContent = '$' + ticker;
+  document.getElementById('cpSupply').textContent = fmt(supply,0) + ' supply';
+  const lg = document.getElementById('cpLogo');
+  if (!lg.querySelector('img')) lg.innerHTML = '<span>' + (name[0] || '?').toUpperCase() + '</span>';
+}
+
+function updateDevBuy() {
+  const v = parseInt(document.getElementById('devBuySlider').value);
+  document.getElementById('devBuyValue').textContent = fmt(v,0) + ' GBX';
+  document.getElementById('totalFee').textContent = fmt(LAUNCH_FEE + v, 0) + ' GBX';
+}
+
+function launchCoin() {
+  const w = getActiveWallet(); if (!w) return;
+  const name = document.getElementById('lName').value.trim();
+  const ticker = document.getElementById('lTicker').value.trim().toUpperCase();
+  const supply = parseInt(document.getElementById('lSupply').value || 1000000000);
+  const desc = document.getElementById('lDesc').value.trim();
+  const tw = document.getElementById('lTwitter').value.trim();
+  const tg = document.getElementById('lTele').value.trim();
+  const devBuy = parseInt(document.getElementById('devBuySlider').value);
+  const totalCost = LAUNCH_FEE + devBuy;
+  const logoSrc = document.getElementById('cpLogo').querySelector('img')?.src || '';
+  const emoji = (name[0] || '?').toUpperCase();
+
+  if (!name || !ticker) { showToast('Fill name and ticker'); return; }
+  if (w.spendable < totalCost) { showToast('Insufficient GBX (need ' + totalCost + ')'); return; }
+
+  // Calculate dev tokens from bonding curve
+  let devTokens = 0;
+  if (devBuy > 0) {
+    // For initial buy: tokens = devBuy / avg_price (linear curve from base)
+    const avgPrice = CURVE_BASE_PRICE + (CURVE_SLOPE * devBuy / CURVE_BASE_PRICE / 2);
+    devTokens = devBuy / avgPrice;
+  }
+
+  const coin = {
+    id: 'coin_' + Date.now().toString(36),
+    name, ticker, supply, desc, twitter:tw, telegram:tg, logo:logoSrc, emoji,
+    creator: w.id,
+    creatorAddress: w.address,
+    soldSupply: devTokens,
+    holdersBalance: { [w.id]: devTokens },
+    raised: devBuy,
+    holders: devBuy > 0 ? 1 : 0,
+    createdAt: Date.now(),
+    graduated: false
+  };
+
+  // Deduct from wallet
+  w.balance -= totalCost; w.spendable -= totalCost;
+  state.coins.push(coin);
+  saveState(); refreshUI();
+
+  // Reset form
+  document.getElementById('lName').value = '';
+  document.getElementById('lTicker').value = '';
+  document.getElementById('lDesc').value = '';
+  document.getElementById('lTwitter').value = '';
+  document.getElementById('lTele').value = '';
+  document.getElementById('devBuySlider').value = 0;
+  updateDevBuy();
+  document.getElementById('cpLogo').innerHTML = '<span>?</span>';
+  document.getElementById('logoPreview').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>';
+  updatePreview();
+
+  showToast(t('coinDeployed') + ' · ' + ticker);
+}
+
+function getCoinPrice(coin) {
+  // Linear bonding curve: price = base + slope * sold
+  return CURVE_BASE_PRICE + CURVE_SLOPE * coin.soldSupply;
+}
+
+function getCoinMC(coin) {
+  // Market cap = current price × supply, but we use raised + projection
+  return coin.raised + (getCoinPrice(coin) * (coin.supply - coin.soldSupply) * 0.1);
+}
+
+function renderMyCoins() {
+  const w = getActiveWallet();
+  const list = document.getElementById('myCoinsList');
+  if (!list || !w) return;
+  const myCoins = state.coins.filter(c => c.creator === w.id || (c.holdersBalance && c.holdersBalance[w.id] > 0));
+  if (myCoins.length === 0) {
+    list.innerHTML = '<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg><p>' + t('noTx').split('\n')[0] + '</p></div>';
+    return;
+  }
+  list.innerHTML = '<div class="coin-list">' + myCoins.map(c => {
+    const myBal = (c.holdersBalance && c.holdersBalance[w.id]) || 0;
+    const price = getCoinPrice(c);
+    const mc = getCoinMC(c);
+    const progress = Math.min(100, (mc / GRADUATION_MC) * 100);
+    return `<div class="coin-card" onclick="openCoin('${c.id}')">
+      <div class="coin-card-logo">${c.logo ? `<img src="${c.logo}">` : `<span>${c.emoji}</span>`}</div>
+      <div class="coin-card-info">
+        <div class="coin-card-name">${c.name}</div>
+        <div class="coin-card-meta">$${c.ticker} · ${fmt(myBal,0)} ${c.ticker}</div>
+        <div class="coin-progress"><div class="coin-progress-fill" style="width:${progress}%"></div></div>
+      </div>
+      <div class="coin-card-stats">
+        <div class="coin-card-mc">${fmt(mc,0)} GBX</div>
+        <div class="coin-card-change">${fmt(progress,1)}%</div>
+      </div>
+    </div>`;
+  }).join('') + '</div>';
+}
+
+function renderCoinMarket() {
+  const list = document.getElementById('coinMarketList');
+  if (!list) return;
+  if (state.coins.length === 0) {
+    list.innerHTML = '<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg><p>No coins yet · Be first</p></div>';
+    return;
+  }
+  list.innerHTML = state.coins.slice().sort((a,b)=>b.createdAt-a.createdAt).map(c => {
+    const mc = getCoinMC(c);
+    const progress = Math.min(100, (mc / GRADUATION_MC) * 100);
+    return `<div class="coin-card" onclick="openCoin('${c.id}')">
+      <div class="coin-card-logo">${c.logo ? `<img src="${c.logo}">` : `<span>${c.emoji}</span>`}</div>
+      <div class="coin-card-info">
+        <div class="coin-card-name">${c.name}</div>
+        <div class="coin-card-meta">$${c.ticker} · ${c.holders} holders</div>
+        <div class="coin-progress"><div class="coin-progress-fill" style="width:${progress}%"></div></div>
+      </div>
+      <div class="coin-card-stats">
+        <div class="coin-card-mc">${fmt(mc,0)}</div>
+        <div class="coin-card-change">${fmt(progress,1)}%</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ═══ COIN TRADE ═══
+function openCoin(id) {
+  activeCoin = state.coins.find(c => c.id === id);
+  if (!activeCoin) return;
+  const c = activeCoin;
+  document.getElementById('ctLogo').innerHTML = c.logo ? `<img src="${c.logo}">` : `<span>${c.emoji}</span>`;
+  document.getElementById('ctName').textContent = c.name;
+  document.getElementById('ctTicker').textContent = '$' + c.ticker;
+  const mc = getCoinMC(c);
+  const price = getCoinPrice(c);
+  document.getElementById('ctMc').textContent = fmt(mc,0) + ' GBX';
+  document.getElementById('ctPrice').textContent = fmt(price,8) + ' GBX';
+  document.getElementById('ctHolders').textContent = c.holders;
+  document.getElementById('ctProgress').textContent = fmt((mc/GRADUATION_MC)*100,1) + '%';
+  setCoinTradeMode('buy');
+  document.getElementById('ctAmt').value = '';
+  document.getElementById('ctOut').textContent = '— ' + c.ticker;
+  document.getElementById('ctFee').textContent = '—';
+  openModal('mCoinTrade');
+}
+
+function setCoinTradeMode(m) {
+  coinTradeMode = m;
+  document.getElementById('ctTabBuy').classList.toggle('active', m === 'buy');
+  document.getElementById('ctTabSell').classList.toggle('active', m === 'sell');
+  if (!activeCoin) return;
+  if (m === 'buy') {
+    document.getElementById('ctAmtLabel').textContent = t('amountGbx');
+    document.getElementById('ctOutLabel').textContent = t('youReceive');
+    document.getElementById('ctBtn').innerHTML = '<span>' + t('buy') + ' ' + activeCoin.ticker + '</span>';
+    document.getElementById('ctBtn').classList.remove('sell');
+  } else {
+    document.getElementById('ctAmtLabel').textContent = 'Amount (' + activeCoin.ticker + ')';
+    document.getElementById('ctOutLabel').textContent = t('youReceive') + ' (GBX)';
+    document.getElementById('ctBtn').innerHTML = '<span>' + t('sell') + ' ' + activeCoin.ticker + '</span>';
+    document.getElementById('ctBtn').classList.add('sell');
+  }
+  calcCoinTrade();
+}
+
+function calcCoinTrade() {
+  if (!activeCoin) return;
+  const amt = parseFloat(document.getElementById('ctAmt').value) || 0;
+  if (coinTradeMode === 'buy') {
+    const price = getCoinPrice(activeCoin);
+    const tokens = (amt * 0.99) / price; // 1% fee
+    document.getElementById('ctOut').textContent = fmt(tokens,2) + ' ' + activeCoin.ticker;
+    document.getElementById('ctFee').textContent = fmt(amt*0.01,4) + ' GBX';
+  } else {
+    const price = getCoinPrice(activeCoin);
+    const gbx = amt * price * 0.99;
+    document.getElementById('ctOut').textContent = fmt(gbx,4) + ' GBX';
+    document.getElementById('ctFee').textContent = fmt(amt*price*0.01,4) + ' GBX';
+  }
+}
+
+function executeCoinTrade() {
+  const w = getActiveWallet();
+  if (!w || !activeCoin) return;
+  const amt = parseFloat(document.getElementById('ctAmt').value) || 0;
+  if (amt <= 0) { showToast(t('enterAmount')); return; }
+  const c = activeCoin;
+  if (!c.holdersBalance) c.holdersBalance = {};
+
+  if (coinTradeMode === 'buy') {
+    if (w.spendable < amt) { showToast('Insufficient GBX'); return; }
+    const price = getCoinPrice(c);
+    const tokens = (amt * 0.99) / price;
+    w.balance -= amt; w.spendable -= amt;
+    c.holdersBalance[w.id] = (c.holdersBalance[w.id] || 0) + tokens;
+    c.soldSupply += tokens;
+    c.raised += amt * 0.99;
+    if (!c.holdersBalance[w.id] || c.holdersBalance[w.id] === tokens) c.holders = (c.holders || 0) + 1;
+    showToast('+' + fmt(tokens,2) + ' ' + c.ticker);
+  } else {
+    const myBal = c.holdersBalance[w.id] || 0;
+    if (amt > myBal) { showToast('Insufficient ' + c.ticker); return; }
+    const price = getCoinPrice(c);
+    const gbx = amt * price * 0.99;
+    c.holdersBalance[w.id] -= amt;
+    c.soldSupply -= amt;
+    c.raised -= gbx;
+    w.balance += gbx; w.spendable += gbx;
+    if (c.holdersBalance[w.id] <= 0) { delete c.holdersBalance[w.id]; c.holders = Math.max(0, (c.holders || 1) - 1); }
+    showToast('+' + fmt(gbx,4) + ' GBX');
+  }
+
+  saveState();
+  refreshUI();
+  // Refresh modal
+  const mc = getCoinMC(c);
+  const price = getCoinPrice(c);
+  document.getElementById('ctMc').textContent = fmt(mc,0) + ' GBX';
+  document.getElementById('ctPrice').textContent = fmt(price,8) + ' GBX';
+  document.getElementById('ctHolders').textContent = c.holders;
+  document.getElementById('ctProgress').textContent = fmt((mc/GRADUATION_MC)*100,1) + '%';
+  document.getElementById('ctAmt').value = '';
+  calcCoinTrade();
+}
+
+// ═══ MISC ═══
+function startMine() {
+  miningActive = true;
+  document.getElementById('mDot').className = 'mc-dot';
+  document.getElementById('mLabel').textContent = t('active');
+  showToast(t('miningStarted'));
+}
+function stopMine() {
+  miningActive = false;
+  document.getElementById('mDot').className = 'mc-dot off';
+  document.getElementById('mLabel').textContent = t('stop');
+  document.getElementById('mHash').textContent = '--';
+  showToast(t('miningStopped'));
+}
+
+function setLang(el, lang) {
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  applyLang(lang);
+  showToast(t('langSet'));
+}
+
+function setActiveToken(tok) { /* future use */ }
+
+// ═══ INIT ═══
+loadLang();
+loadState();
+renderEmojiGrid();
+applyLang(currentLang);
+
+// Sync active lang button
+const langMap = { 'English':'en', 'Deutsch':'de', 'Română':'ro', 'العربية':'ar', '中文':'zh' };
+document.querySelectorAll('.lang-btn').forEach(b => {
+  if (langMap[b.textContent.trim()] === currentLang) b.classList.add('active');
+  else b.classList.remove('active');
+});
+
+if (state.isOnboarded && state.wallets.length > 0) {
+  document.getElementById('onboard').classList.remove('show');
+  document.getElementById('app').style.display = 'flex';
+  refreshUI();
+}
+
+let blockH = 19797;
+setInterval(() => {
+  if (Math.random() > 0.82) {
+    blockH++;
+    const b = blockH.toLocaleString();
+    document.getElementById('blockTag') && (document.getElementById('blockTag').textContent = '#' + b);
+    document.getElementById('homeBlock') && (document.getElementById('homeBlock').textContent = b);
+    document.getElementById('mBlock') && (document.getElementById('mBlock').textContent = b);
+  }
+  if (miningActive) {
+    const el = document.getElementById('mHash');
+    if (el) el.textContent = (Math.floor(800 + Math.random()*600)).toLocaleString();
+  }
+}, 3000);
+
+calcSwap();
+updatePreview();
+updateDevBuy();
+</script>
+</body>
+</html>
